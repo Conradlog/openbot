@@ -438,6 +438,8 @@ export function createBrowserStore(deps: BrowserStoreDeps) {
     const target = targetAgentId ? { agentId: targetAgentId, serverId: deps.props.server?.id ?? "local" } : undefined;
     const analytics = desktopAnalytics.scope();
     const url = browserAddressUrl(value);
+    // Local privacy mode: text that is not a web address opens nothing.
+    if (!url) return;
     // A host that cannot move an existing tab to an address gets a new tab for it instead: the
     // released navigate route carries a direction only.
     const canNavigateCurrentTab = serverSupportsCapability(deps.props.server, TEAM_BROWSER_NAVIGATION_CAPABILITY);

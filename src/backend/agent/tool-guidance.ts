@@ -122,7 +122,7 @@ function openbotGuidance(namespace: string, tool: string): string {
     case "html_preview":
       return [
         "OpenBot renders GitHub-flavored Markdown tables: a header row, a separator row with three or more dashes per column, and one or more data rows. A fenced ```mermaid block shows a diagram. A fenced ```html block shows a static page next to its code: inline CSS, inline SVG, and data: URLs only, with no scripts or network loads.",
-        "When a chart, a table, a diagram, an image collage, or a mockup needs scripts or a CDN library, publish a self-contained page with openbot.html_render before your final answer. OpenBot shows it above the answer, so do not announce or repeat it; add only what it does not say.",
+        "When a chart, a table, a diagram, an image collage, or a mockup needs scripts, publish a self-contained page with openbot.html_render before your final answer. OpenBot shows it above the answer, so do not announce or repeat it; add only what it does not say. Remote scripts, fonts and images are blocked, so use inline script and style and data: URIs only.",
       ].join("\n");
     case "react_to_user_message":
       return "React to clear emotional moments. Wins, affection, gratitude, playful humor, sadness, disappointment, frustration, loneliness, and strong approval normally get one fitting reaction; do not skip them. Negative emotions get an empathetic reaction, such as ❤️, 😔, or 🫂. An emoji in your answer is not a reaction: when you use one for the user's emotion, also react. Skip neutral, informational, or routine messages, and do not react on every turn.";

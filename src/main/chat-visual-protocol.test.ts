@@ -7,7 +7,9 @@ const developmentUrl = "http://localhost:5173";
 describe("visual reply pages", () => {
   it("serves the page in a sandbox with the frame script before the agent's script", async () => {
     const response = chatVisualResponse(new TextEncoder().encode("<html><head><script>agent()</script></head></html>"));
-    expect(response.headers.get("Content-Security-Policy")).toBe("sandbox allow-scripts allow-forms");
+    expect(response.headers.get("Content-Security-Policy")).toBe(
+      "sandbox allow-scripts allow-forms; default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data: blob:; connect-src 'none'; form-action 'none'; frame-src 'none'",
+    );
     expect(response.headers.get("Access-Control-Allow-Origin")).toBeNull();
     const page = await response.text();
     expect(page.indexOf("ui/notifications/size-changed")).toBeLessThan(page.indexOf("agent()"));

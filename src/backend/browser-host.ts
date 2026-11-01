@@ -178,6 +178,8 @@ export interface BrowserSiteVisit {
   agentId: string | null;
 }
 
+/** The address of a new tab in local privacy mode. It matches `BROWSER_NEW_TAB_URL` in the UI. */
+const NEW_TAB_URL = "about:blank";
 const MAX_ENCODED_CAPTURE_PIXELS = 4_194_304;
 /**
  * How long enumerating a tab's documents may take before it is unwound. It runs off a navigation
@@ -759,7 +761,8 @@ export class BrowserHost {
     }
     // Each tab is its own renderer process.
     if (this.#memoryLow()) return yield* browserFailure(new Error(sourceText("error.backend.browserLowMemory")));
-    const normalizedUrl = yield* browserSync(() => normalizeBrowserUrl(url));
+    // Local privacy mode: a new tab opens about:blank, not a search engine.
+    const normalizedUrl = yield* browserSync(() => (url === NEW_TAB_URL ? url : normalizeBrowserUrl(url)));
     const previouslyFocused = focus ? null : this.#focusedContentsOutsideTabs();
     const tabSession = privateSession || !ownerAgentId ? undefined : yield* this.#agentTabSession(ownerAgentId);
     const tab = this.#createTab(
@@ -862,7 +865,7 @@ export class BrowserHost {
     tabId: string,
     url: string,
   ): Effect.fn.Return<void, BrowserOperationError> {
-    const normalizedUrl = yield* browserSync(() => normalizeBrowserUrl(url));
+    const normalizedUrl = yield* browserSync(() => (url === NEW_TAB_URL ? url : normalizeBrowserUrl(url)));
     yield* this.#enqueue(
       tabId,
       (tab) =>

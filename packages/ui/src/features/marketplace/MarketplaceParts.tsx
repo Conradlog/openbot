@@ -22,6 +22,7 @@ import { CONNECTOR_LISTINGS } from "../connectors/connector-catalog";
 import { LogoTile } from "../settings/IntegrationLayout";
 import type { MarketplaceListing } from "./marketplace-listing";
 import type { MarketplaceApp, MarketplaceModel } from "./marketplace-model";
+import { localIconUrl } from "./PluginIcon";
 
 /** The part of a page that waits for the full listing: a status line, or the failure with Retry. */
 export function DetailState(props: {
@@ -101,7 +102,10 @@ export function MenuCheck(props: { on: boolean }) {
 /** A skill's own icon, or a spark when it has none or the icon does not load. "row" is the tile of a list row. */
 export function SkillMark(props: { skill: Pick<MarketplaceSkillSummary, "iconUrl">; size: "sm" | "row" | "md" }) {
   const [failed, setFailed] = createSignal<string | null>(null);
-  const url = () => (props.skill.iconUrl && props.skill.iconUrl !== failed() ? props.skill.iconUrl : null);
+  const url = () => {
+    const icon = localIconUrl(props.skill.iconUrl);
+    return icon && icon !== failed() ? icon : null;
+  };
   return (
     <span class="marketplace-skill-mark" data-size={props.size} data-kind={url() ? "icon" : "none"} aria-hidden="true">
       <SkillIcon url={url()} onError={setFailed} />
@@ -112,7 +116,10 @@ export function SkillMark(props: { skill: Pick<MarketplaceSkillSummary, "iconUrl
 /** A skill's icon, or the sparkles when it has none or the icon does not load. */
 export function SkillIcon(props: { url: string | null | undefined; onError?: (url: string) => void }) {
   const [failed, setFailed] = createSignal<string | null>(null);
-  const url = () => (props.url && props.url !== failed() ? props.url : null);
+  const url = () => {
+    const icon = localIconUrl(props.url);
+    return icon && icon !== failed() ? icon : null;
+  };
   return (
     <Show when={url()} fallback={<Sparkles />} keyed>
       {(src) => (
@@ -134,7 +141,7 @@ export function AppMark(props: { app: MarketplaceApp }) {
   const [failed, setFailed] = createSignal<string | null>(null);
   const url = () => {
     const app = props.app;
-    const icon = app.kind === "plugin" ? app.plugin.iconUrl : null;
+    const icon = localIconUrl(app.kind === "plugin" ? app.plugin.iconUrl : null);
     return icon && icon !== failed() ? icon : null;
   };
   return (

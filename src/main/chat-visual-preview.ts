@@ -15,13 +15,14 @@ import {
   type ChatVisualPreviewResult,
 } from "../backend/agent/chat-visual-preview";
 import { chatVisualResponse } from "./chat-visual-protocol";
+import { installSessionGuard } from "./local-privacy";
 
 /**
  * Draws a visual reply page for `html_preview` in a window that is never shown.
  *
  * The window has its own session in memory, so the page cannot read the app's cookies, storage or
- * attachments. The page gets the same sandbox and frame script as in the chat, and it can load files
- * from the network, as it can there. It cannot ask for a permission, download a file, open a window
+ * attachments. The page gets the same sandbox and frame script as in the chat, and it cannot load files
+ * from the network (local privacy mode). It cannot ask for a permission, download a file, open a window
  * or leave its address.
  */
 
@@ -75,6 +76,8 @@ export class ChatVisualPreviewer implements ChatVisualPreviewHost {
   #previewSession(): Session {
     if (this.#session) return this.#session;
     const session = electronSession.fromPartition(PREVIEW_PARTITION);
+    // Local privacy mode: the preview window may load only app schemes, data:, blob: and this computer.
+    installSessionGuard(session, "strict");
     session.protocol.handle("openbot-visual", (request) => {
       const url = new URL(request.url);
       const page = url.hostname === PREVIEW_HOST ? this.#pages.get(url.pathname.slice(1)) : undefined;

@@ -38,8 +38,8 @@ export interface RichMessageTextProps {
   /** The characters of a streaming body after this text. It fades the words revealed last. */
   streamingTailAfter?: number | undefined;
   /**
-   * False shows only the link icon, so that no linked site is asked for its favicon. Use it for
-   * text that another person wrote, such as the instructions of a shared agent.
+   * Only true asks a linked site for its favicon. In local privacy mode it is left unset, so that
+   * showing a message makes no request.
    */
   linkFavicons?: boolean | undefined;
 }
@@ -144,7 +144,7 @@ export function RichMessageText(props: RichMessageTextProps) {
               <MessageLink
                 url={part.url}
                 title={linkTitle(part.text, part.url)}
-                favicon={props.linkFavicons !== false}
+                favicon={props.linkFavicons === true}
                 onOpenLink={props.onOpenLink}
               >
                 {part.text}
@@ -297,7 +297,7 @@ export function MessageLink(props: {
   /** The native tooltip. Omit it when the link text already shows the URL. */
   title?: string | undefined;
   children: JSX.Element;
-  /** False keeps the request for the linked site's favicon from being made. */
+  /** Only true makes the request for the linked site's favicon (off in local privacy mode). */
   favicon?: boolean;
   onOpenLink: (url: string) => void;
 }) {
@@ -315,7 +315,7 @@ export function MessageLink(props: {
     >
       <span class="message-link-icon" aria-hidden="true">
         <LinkIcon />
-        <Show when={props.favicon !== false}>
+        <Show when={props.favicon === true}>
           <img
             src={faviconUrl(props.url)}
             alt=""

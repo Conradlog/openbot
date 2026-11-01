@@ -14,7 +14,9 @@ describe("workspace HTML preview pages", () => {
     const page = pages.get(new URL(address ?? ""));
     expect(page).toEqual(html);
     const response = pages.response(new Request(address ?? ""));
-    expect(response.headers.get("Content-Security-Policy")).toBe("sandbox allow-scripts allow-forms");
+    expect(response.headers.get("Content-Security-Policy")).toBe(
+      "sandbox allow-scripts allow-forms; default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data: blob:; connect-src 'none'; form-action 'none'; frame-src 'none'",
+    );
     expect(response.headers.get("Access-Control-Allow-Origin")).toBeNull();
     expect(await response.text()).toContain("drawChart()");
 

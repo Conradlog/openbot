@@ -1,29 +1,29 @@
-import { isMobileConnectDevelopmentHost } from "@openbot/contracts/mobile-connect";
-
+/**
+ * Local privacy mode: the renderer may talk only to this computer and to the app schemes. There is no
+ * analytics, Signal or `*.openbot.run` source, and `img-src` has no `https:`. The Signal parameters
+ * stay so that callers compile; they are not read.
+ */
 export function buildContentSecurityPolicy(
   packaged: boolean,
-  developmentSignalUrl?: string,
-  selfHostedSignalOrigin?: string | null,
+  _developmentSignalUrl?: string,
+  _selfHostedSignalOrigin?: string | null,
 ): string {
-  const selfHostedSignalSource = selfHostedSignalOrigin ? ` ${selfHostedSignalOrigin}` : "";
-  const developmentSources = packaged
-    ? ""
-    : ` http://localhost:* ws://localhost:*${developmentSignalSource(developmentSignalUrl)}`;
+  const developmentSources = packaged ? "" : " http://localhost:* ws://localhost:*";
   const developmentImageSources = packaged ? "" : " http://127.0.0.1:* http://localhost:*";
 
   return [
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
-    `img-src 'self' data: openbot-attachment: openbot-remote-attachment: openbot-avatar: openbot-remote-avatar: openbot-server-logo: openbot-remote-server-logo: https:${developmentImageSources}`,
+    `img-src 'self' data: openbot-attachment: openbot-remote-attachment: openbot-avatar: openbot-remote-avatar: openbot-server-logo: openbot-remote-server-logo:${developmentImageSources}`,
     "font-src 'self' data:",
     // The lightbox plays a recording from the attachment scheme, and the preview panel plays one
     // from an object URL of the bytes that the main process sent. Neither matches `default-src`.
     "media-src 'self' blob: openbot-attachment: openbot-remote-attachment:",
-    `connect-src 'self' openbot-attachment: openbot-remote-attachment: https://analytics.openbot.run ws://127.0.0.1:* wss://*.openbot.run${selfHostedSignalSource}${developmentSources}`,
+    `connect-src 'self' openbot-attachment: openbot-remote-attachment: ws://127.0.0.1:*${developmentSources}`,
     "object-src 'none'",
     // The remote desktop viewer uses a loopback proxy in packaged apps too.
-    "frame-src 'self' openbot-attachment: openbot-remote-attachment: openbot-visual: openbot-remote-visual: https://*.openbot.run http://127.0.0.1:* http://localhost:*",
+    "frame-src 'self' openbot-attachment: openbot-remote-attachment: openbot-visual: openbot-remote-visual: http://127.0.0.1:* http://localhost:*",
     "base-uri 'none'",
   ].join("; ");
 }
@@ -44,22 +44,4 @@ export function readSelfHostedSignalOrigin(
     throw new Error("OPENBOT_REMOTE_SIGNAL_URL must be a wss: URL without credentials.");
   }
   return url.origin;
-}
-
-function developmentSignalSource(value: string | undefined): string {
-  if (!value) return "";
-  try {
-    const url = new URL(value);
-    if (
-      url.protocol !== "ws:" ||
-      !isMobileConnectDevelopmentHost(url.hostname) ||
-      url.username !== "" ||
-      url.password !== ""
-    ) {
-      return "";
-    }
-    return ` ${url.origin}`;
-  } catch {
-    return "";
-  }
 }

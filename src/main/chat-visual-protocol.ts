@@ -7,8 +7,24 @@ import { isTrustedRendererUrl } from "./trusted-renderer";
  *
  * A visual reply page runs the agent's scripts. Its `sandbox` policy gives it an opaque origin, so
  * it cannot read the app, its storage or another attachment, and it cannot open a window or move
- * the app window. It can load files from the network, as a web page can.
+ * the app window. In local privacy mode it cannot load files from the network.
  */
+
+/**
+ * Local privacy mode: a visual reply page loads nothing from the network. It keeps inline scripts
+ * and styles, and `data:` and `blob:` files. This policy is added to the sandbox.
+ */
+const CHAT_VISUAL_PAGE_POLICY = [
+  "default-src 'none'",
+  "script-src 'unsafe-inline'",
+  "style-src 'unsafe-inline'",
+  "img-src data: blob:",
+  "font-src data:",
+  "media-src data: blob:",
+  "connect-src 'none'",
+  "form-action 'none'",
+  "frame-src 'none'",
+].join("; ");
 
 const DOCUMENT_MIME_TYPES = new Set(["text/html", "application/xhtml+xml", "image/svg+xml"]);
 
@@ -21,7 +37,7 @@ export function chatVisualResponse(bytes: Uint8Array): Response {
   return new Response(chatVisualDocument(new TextDecoder().decode(bytes)), {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
-      "Content-Security-Policy": `sandbox ${CHAT_VISUAL_FRAME_SANDBOX}`,
+      "Content-Security-Policy": `sandbox ${CHAT_VISUAL_FRAME_SANDBOX}; ${CHAT_VISUAL_PAGE_POLICY}`,
       "Cache-Control": "no-store",
       "X-Content-Type-Options": "nosniff",
     },

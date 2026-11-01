@@ -2,6 +2,7 @@ import { fileReferenceName, isFileReference } from "@openbot/brand/file-referenc
 import { blockChatMath, chatMathBlockStart, chatMathStart, inlineChatMath } from "@openbot/contracts/chat-math";
 import { chatPreviewKind } from "@openbot/contracts/chat-preview";
 import { INPUT_LIMITS } from "@openbot/contracts/input-limits";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { Button, Checkbox } from "@openbot/ui";
 import { Dynamic } from "@solidjs/web";
 import { Marked, type Token, type Tokens, type TokensList } from "marked";
@@ -69,6 +70,11 @@ interface MathToken extends Tokens.Generic {
   type: "blockMath" | "inlineMath";
   text: string;
   display: boolean;
+}
+
+/** Local privacy mode: a remote image is shown as a link, so that showing a message makes no request. */
+function remoteImagesAsLinks(requested: boolean | undefined): boolean {
+  return LOCAL_PRIVACY_MODE || requested === true;
 }
 
 const markdown = new Marked({
@@ -674,7 +680,7 @@ function MarkdownInline(props: {
               <MessageLink
                 url={url}
                 title={token.title || linkTitle(token.text, url)}
-                favicon={props.content.linkFavicons !== false}
+                favicon={props.content.linkFavicons === true}
                 onOpenLink={props.content.onOpenLink}
               >
                 {token.text === token.href ? (
@@ -708,12 +714,12 @@ function MarkdownInline(props: {
           case "image": {
             if (!tokenIs(token, "image")) return token.raw;
             const url = safeBrowserUrl(token.href);
-            if (url && props.content.imagesAsLinks) {
+            if (url && remoteImagesAsLinks(props.content.imagesAsLinks)) {
               return (
                 <MessageLink
                   url={url}
                   title={url}
-                  favicon={props.content.linkFavicons !== false}
+                  favicon={props.content.linkFavicons === true}
                   onOpenLink={props.content.onOpenLink}
                 >
                   {token.text || t("chat.image.view")}

@@ -8,6 +8,7 @@ import { SkillGradient } from "@openbot/ui/skill-gradient";
 import { errorReference, type UserErrorDetails } from "@openbot/user-errors";
 import type { JSX } from "@solidjs/web";
 import { createSignal, Show } from "solid-js";
+import { localIconUrl } from "../features/marketplace/PluginIcon";
 import { currentText, useText } from "../text";
 
 export function skillExamplePrompt(
@@ -40,7 +41,10 @@ export function SkillPreview(props: {
   const [linkError, setLinkError] = createSignal<UserErrorDetails | null>(null);
   const [iconTint, setIconTint] = createSignal<{ url: string; color: string } | null>(null);
   const [failedIcon, setFailedIcon] = createSignal<string | null>(null);
-  const iconUrl = () => (props.skill.iconUrl && failedIcon() !== props.skill.iconUrl ? props.skill.iconUrl : null);
+  const iconUrl = () => {
+    const icon = localIconUrl(props.skill.iconUrl);
+    return icon && failedIcon() !== icon ? icon : null;
+  };
   const readIconTint = (image: HTMLImageElement, url: string) => {
     try {
       const canvas = document.createElement("canvas");

@@ -24,6 +24,7 @@ import { Alert, AlertContent, AlertDescription, AlertIcon, AlertTitle, Button, O
 import type { JSX } from "@solidjs/web";
 import { createSignal, createStore, Show } from "solid-js";
 import { useText } from "../../text";
+import { localIconUrl } from "../marketplace/PluginIcon";
 import { WizardDialog } from "./IntegrationLayout";
 
 /** What is being connected, in the words the listing uses for it. */
@@ -133,7 +134,10 @@ export interface McpConnectShellProps extends Pick<McpConnectBaseProps, "open" |
 /** The icon of the app being connected, for the tile in the dialog head. */
 export function McpConnectMark(props: { iconUrl: string | null | undefined }) {
   const [failed, setFailed] = createSignal<string | null>(null);
-  const url = () => (props.iconUrl && props.iconUrl !== failed() ? props.iconUrl : null);
+  const url = () => {
+    const icon = localIconUrl(props.iconUrl);
+    return icon && icon !== failed() ? icon : null;
+  };
   return (
     <Show when={url()} fallback={<Puzzle aria-hidden="true" />} keyed>
       {(src) => <img src={src} alt="" onError={() => setFailed(src)} />}

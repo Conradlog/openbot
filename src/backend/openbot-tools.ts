@@ -63,7 +63,7 @@ interface OpenBotToolDefinition {
 
 /** The page rules for `html_render` and `html_preview`. The names match the variables that `ChatVisual` sends. */
 const VISUAL_PAGE_RULES = [
-  "Write one self-contained HTML document with inline <style> and <script>. Remote http(s) files, such as a chart library from a CDN, load as they are; local file paths do not load.",
+  "Write one self-contained HTML document with inline <style> and <script>. Remote scripts, fonts, images and other network files are blocked (local privacy mode), and local file paths do not load: the page must be self-contained, with inline script and style and data: URIs for images and fonts, so draw charts with inline script or SVG.",
   "The page runs in a sandbox: it cannot use cookies, storage or pop-up windows. A click on an http(s) link opens the link in the user's browser.",
   "The frame has no border and sits on the chat background, as wide as the reply column (about 360px on phones). Leave html and body with no background, use a fluid width and no outer card or banner title: the page is part of your reply.",
   "Give charts fixed pixel heights. Let the content set the page height; do not use 100vh or height:100% on html or body. The frame cuts what is outside the page box, so highlight a box with its border, not an outline or an outer shadow.",

@@ -7,6 +7,7 @@ import type {
   MarketplaceSkillDetail,
 } from "@openbot/contracts/ipc";
 import { SETTINGS_PANEL_DEFAULT } from "@openbot/ui/components/SettingsPanel";
+import { BROWSER_NEW_TAB_URL } from "@openbot/ui/features/browser/browser-suggestions";
 import type { AgentActivityLabel } from "@openbot/ui/features/conversation/AgentActivity";
 import { currentText } from "@openbot/ui/text";
 import type { UserErrorDetails } from "@openbot/user-errors";
@@ -400,7 +401,7 @@ export function createServerConversationState() {
   const [settingsProvider, setSettingsProvider] = createSignal<AgentProviderId>("codex");
   const [settingsModel, setSettingsModel] = createSignal<AgentModelId>("gpt-6-luna");
   const [settingsReasoning, setSettingsReasoning] = createSignal<AgentReasoningEffort>("medium");
-  const [browserAddress, setBrowserAddress] = createSignal("https://www.google.com");
+  const [browserAddress, setBrowserAddress] = createSignal(BROWSER_NEW_TAB_URL);
   const [sidebarFilePreview, writeSidebarFilePreview] = createSignal<SidebarFilePreview | null>(null);
   // The accepted preview outlives its lazy view. Keep its page with the server-owned state,
   // including when it changes twice before Solid settles or the user visits another conversation.

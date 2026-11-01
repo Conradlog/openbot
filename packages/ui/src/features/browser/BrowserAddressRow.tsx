@@ -106,7 +106,8 @@ export function BrowserAddressRow(props: {
       state.open = true;
       state.typed = typed;
       state.text = shown;
-      state.active = typed.trim() ? 0 : -1;
+      // Local privacy mode: Enter opens a row only for an address or a completion, never for plain words.
+      state.active = completion || (typed.trim() && browserAddressUrl(typed.trim())) ? 0 : -1;
       state.completed = completion !== undefined;
     });
     flush();
@@ -157,8 +158,12 @@ export function BrowserAddressRow(props: {
       const value = event.currentTarget.value.trim();
       if (row) choose(row);
       else if (value) {
-        props.view.onOpenAddress(browserAddressUrl(value), tab()?.id);
-        finish();
+        // Local privacy mode: text that is not an address does nothing.
+        const address = browserAddressUrl(value);
+        if (address) {
+          props.view.onOpenAddress(address, tab()?.id);
+          finish();
+        }
       }
     } else if (event.key === "Escape") {
       event.preventDefault();

@@ -14,6 +14,7 @@ import {
 } from "@openbot/contracts/ipc";
 import { toast } from "@openbot/ui";
 import type { QuestionPromptComposerAnswer } from "@openbot/ui/components/QuestionPromptBubble";
+import { BROWSER_NEW_TAB_URL } from "@openbot/ui/features/browser/browser-suggestions";
 import type { QuoteRequest } from "@openbot/ui/features/conversation/ComposerEditor";
 import { currentText } from "@openbot/ui/text";
 import { usesTouchLayout } from "@openbot/ui/utils";
@@ -1560,7 +1561,7 @@ export function createConversationViewScope(props: ConversationProps) {
     }),
     ({ activeTab, screenOpen, activeBrowserTabId, onActivateBrowserTab, suspended, browserDisabled }) => {
       if (browserDisabled || suspended) return;
-      setBrowserAddress(activeTab?.url ?? "https://www.google.com");
+      setBrowserAddress(activeTab?.url ?? BROWSER_NEW_TAB_URL);
       if (screenOpen && activeTab && activeTab.id !== activeBrowserTabId) {
         onActivateBrowserTab(activeTab.id);
       }
