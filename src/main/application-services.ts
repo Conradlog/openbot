@@ -90,7 +90,7 @@ import {
   latestTurnAnswer,
 } from "@openbot/contracts/ipc";
 import { decodeRecord, requiredString } from "@openbot/contracts/ipc-decoding";
-import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
+import { LOCAL_PRIVACY_MODE, LOCAL_PRIVACY_PROVIDER_ENVIRONMENT } from "@openbot/contracts/local-privacy";
 import { sourceText } from "@openbot/i18n/source";
 import { createOpenBotLogger, toLogValue } from "@openbot/logging";
 import { REMOTE_ACCOUNT_CHECK_INTERVAL_MS } from "@openbot/team-client";
@@ -1114,9 +1114,12 @@ export async function createApplicationServices({
   const cpuLimitModule = app.isPackaged
     ? join(process.resourcesPath, "agent-runtime", "cpu-limit.cjs")
     : resolve(__dirname, "../../resources/agent-runtime/cpu-limit.cjs");
-  const serverEnvironment = hostMemory
-    ? agentProcessEnvironment(existsSync(cpuLimitModule) ? cpuLimitModule : null)
-    : { [AGENT_PROCESS_VARIABLE]: "1" };
+  const serverEnvironment = {
+    ...LOCAL_PRIVACY_PROVIDER_ENVIRONMENT,
+    ...(hostMemory
+      ? agentProcessEnvironment(existsSync(cpuLimitModule) ? cpuLimitModule : null)
+      : { [AGENT_PROCESS_VARIABLE]: "1" }),
+  };
   if (hostMemory) {
     hostMemory.start();
     teardown.push(TEARDOWN_ORDER.serverMemory, "the server memory reading", () => Effect.runPromise(hostMemory.stop()));

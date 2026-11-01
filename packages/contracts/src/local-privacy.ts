@@ -83,3 +83,22 @@ export function isLocalPrivacyStrictAllowed(input: string | URL): boolean {
   // `devtools:`, `chrome-extension:` and the app's own `openbot-*` schemes never leave the computer.
   return true;
 }
+
+/**
+ * Variables for every provider CLI that OpenBot starts. Each CLI talks to its own provider, but
+ * some also send usage telemetry to a vendor of that provider (found with the egress proxy: one CLI
+ * posted logs to a Datadog host), look for an update, or fetch a model list. These switches turn
+ * that traffic off. A CLI that has no such switch is not changed: check it with the egress proxy.
+ */
+export const LOCAL_PRIVACY_PROVIDER_ENVIRONMENT: Readonly<Record<string, string>> = {
+  DISABLE_TELEMETRY: "1",
+  DISABLE_ERROR_REPORTING: "1",
+  DISABLE_AUTOUPDATER: "1",
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1",
+  OPENCODE_DISABLE_AUTOUPDATE: "true",
+  OPENCODE_DISABLE_MODELS_FETCH: "true",
+  GEMINI_TELEMETRY_ENABLED: "false",
+  DO_NOT_TRACK: "1",
+  NO_UPDATE_NOTIFIER: "1",
+  NPM_CONFIG_UPDATE_NOTIFIER: "false",
+};
