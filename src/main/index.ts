@@ -1,3 +1,5 @@
+// Local privacy mode: this import must stay first. It wraps the Node network functions.
+import "./local-privacy-node-guard";
 import { join, resolve } from "node:path";
 import { parseInviteUrl, selfHostedApiOrigin } from "@openbot/contracts/invite-links";
 import {
@@ -108,6 +110,7 @@ import { stopAppImageCrashpadHandlerAtExit } from "./linux-appimage-crashpad";
 import { installLinuxDesktopEntry } from "./linux-desktop-entry";
 import { configureLinuxGpu } from "./linux-gpu-mode";
 import { configureLinuxPasswordStore } from "./linux-password-store";
+import { installLocalPrivacyGuards, startBlockedRequestLog } from "./local-privacy";
 import { takeLocalServerChildEnvironment } from "./local-server-child";
 import { MacHapticFeedback } from "./mac-haptic-feedback";
 import {
@@ -1168,6 +1171,8 @@ if (!hasSingleInstanceLock) {
         return;
       }
       if (!localServerChild) await presentApplication();
+      startBlockedRequestLog();
+      installLocalPrivacyGuards();
       configureContentSecurityPolicy();
       configureRendererPermissions();
       // A local server keeps a window that never loads: the agent browser and the services attach to it.
