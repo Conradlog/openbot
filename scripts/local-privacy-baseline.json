@@ -1,0 +1,109 @@
+{
+  "src/renderer/src/analytics.ts": {
+    "analytics.openbot.run": 1,
+    "openbot.run": 1
+  },
+  "src/renderer/src/features/settings/marketplace-plugin-catalog.ts": {
+    "openbot.run": 30
+  },
+  "src/renderer/src/features/settings/marketplace-calls.ts": {
+    "openbot.run": 1
+  },
+  "src/renderer/src/features/updates/WhatsNewOverlay.tsx": {
+    "openbot.run": 1
+  },
+  "src/renderer/src/features/updates/whats-new-releases.json": {
+    "openbot.run": 1
+  },
+  "src/renderer/src/features/web-client/web-provider-admin.ts": {
+    "openbot.run": 2,
+    "discord.openbot.run": 1
+  },
+  "src/renderer/src/features/agent-templates/PublishAgent.tsx": {
+    "openbot.run": 1
+  },
+  "src/renderer/src/features/agent-templates/agent-template-card.tsx": {
+    "openbot.run": 2
+  },
+  "src/renderer/src/features/onboarding/FirstRunFlow.tsx": {
+    "openbot.run": 2
+  },
+  "src/renderer/src/error-reports.ts": {
+    "openbot.run": 1
+  },
+  "src/main/github-bot-tokens.ts": {
+    "api.openbot.run": 1
+  },
+  "src/main/routine-feed-ics.ts": {
+    "routines.openbot.run": 1
+  },
+  "src/main/analytics.ts": {
+    "analytics.openbot.run": 1
+  },
+  "src/main/application-services.ts": {
+    "api.openbot.run": 1
+  },
+  "src/main/telegram-files.ts": {
+    "signal.openbot.run": 2
+  },
+  "src/main/deep-link-router.ts": {
+    "openbot.run": 1
+  },
+  "src/main/ipc/app-handlers.ts": {
+    "openbot.run": 3,
+    "discord.openbot.run": 1
+  },
+  "src/main/content-security-policy.ts": {
+    ".openbot.run": 1
+  },
+  "src/preload/skills-decoding.ts": {
+    "openbot.run": 1
+  },
+  "packages/ui/src/features/updates/whats-new.css": {
+    "openbot.run": 1
+  },
+  "packages/ui/src/features/servers/JoinServerDialog.tsx": {
+    "openbot.run": 1
+  },
+  "packages/team-client/src/remote-directory.ts": {
+    "api.openbot.run": 3,
+    "openbot.run": 1
+  },
+  "packages/contracts/src/marketplace-links.ts": {
+    "openbot.run": 5
+  },
+  "packages/contracts/src/agent-template-links.ts": {
+    "openbot.run": 5
+  },
+  "packages/contracts/src/local-privacy.ts": {
+    "openbot.run": 1
+  },
+  "packages/contracts/src/signal-protocol/telegram-route.ts": {
+    "signal.openbot.run": 1
+  },
+  "packages/contracts/src/signal-protocol/slack-route.ts": {
+    "signal.openbot.run": 1
+  },
+  "packages/contracts/src/signal-protocol/ticket.ts": {
+    "signal.openbot.run": 1
+  },
+  "packages/contracts/src/invite-links.ts": {
+    "openbot.run": 1,
+    "api.openbot.run": 1
+  },
+  "packages/contracts/src/hosted-servers.ts": {
+    "openbot.run": 1
+  },
+  "packages/contracts/src/first-touch.ts": {
+    "openbot.run": 1
+  },
+  "packages/contracts/src/ipc-agent-templates.ts": {
+    "openbot.run": 1
+  },
+  "packages/contracts/src/plugin-links.ts": {
+    "openbot.run": 3
+  },
+  "packages/telemetry/src/transport.ts": {
+    "analytics.openbot.run": 1
+  }
+}
