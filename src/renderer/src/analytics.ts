@@ -22,6 +22,7 @@ import {
   WORKFLOW_NODE_KINDS,
   type WorkflowNodeKind,
 } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { isBoolean, isDynamicRecord, isFunction, isNumber, isOneOf, isString } from "@openbot/contracts/runtime-values";
 import { normalizeEmailAddress } from "@openbot/contracts/validation";
 import { ANALYTICS_GENERATIONS } from "@openbot/telemetry";
@@ -723,6 +724,8 @@ const UPDATE_PHASES = new Set([
 ]);
 
 function shouldEnableDesktopAnalytics(appInfo: AppInfo, productionBuild: boolean): boolean {
+  // Local privacy mode: product analytics is never enabled.
+  if (LOCAL_PRIVACY_MODE) return false;
   return appInfo.analyticsCaptureUrl !== undefined || (productionBuild && appInfo.variant === "production");
 }
 
@@ -830,8 +833,9 @@ class DesktopAnalytics {
   readonly #productionBuild: boolean;
   #client: OpenPanelClient | null = null;
   #anonymousClient: OpenPanelClient | null = null;
-  #disabled = false;
-  #trackingEnabled = true;
+  // Local privacy mode: disabled and not tracking from the start.
+  #disabled: boolean = LOCAL_PRIVACY_MODE;
+  #trackingEnabled: boolean = !LOCAL_PRIVACY_MODE;
   #identity: AnalyticsIdentity | null = null;
   #pending: PendingEvent[] = [];
   readonly #clientQueue: AnalyticsOperationQueue = { active: false, operations: [] };
@@ -885,6 +889,12 @@ class DesktopAnalytics {
    * failure reports, and the web preference controls both.
    */
   configureWeb(options: { version: string; user: AnalyticsIdentity | null; enabled: boolean }): boolean {
+    // Local privacy mode: the web client does not start analytics either.
+    if (LOCAL_PRIVACY_MODE) {
+      this.#disabled = true;
+      this.#pending = [];
+      return false;
+    }
     if (!this.#client && (!this.#productionBuild || window.location.origin !== "https://openbot.run")) {
       this.#disabled = true;
       this.#pending = [];
@@ -946,7 +956,8 @@ class DesktopAnalytics {
    * loaded at start, a reverted save or another tab's change records nothing.
    */
   setTrackingEnabled(enabled: boolean, options: { recordOptOut?: boolean } = {}): void {
-    if (this.#trackingEnabled === enabled) return;
+    // Local privacy mode: tracking stays off, so there is no opt-out event to record.
+    if (LOCAL_PRIVACY_MODE || this.#trackingEnabled === enabled) return;
     this.#trackingEnabled = enabled;
     configureErrorReports(enabled, this.#identity?.id ?? null);
     if (!enabled) {
@@ -1032,6 +1043,8 @@ class DesktopAnalytics {
   }
 
   #enqueue(queue: AnalyticsOperationQueue, kind: AnalyticsOperationKind, run: () => unknown): void {
+    // Local privacy mode: nothing is queued for the analytics client.
+    if (LOCAL_PRIVACY_MODE) return;
     const hasPendingTrack = queue.operations.some((operation) => operation.kind === "track");
     if (kind === "clear" && !hasPendingTrack) {
       queue.operations = [];

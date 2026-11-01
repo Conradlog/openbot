@@ -1,3 +1,4 @@
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { type ReportTransport, telemetryIO } from "./queue";
 
 export function openPanelTransport(options: {
@@ -10,6 +11,8 @@ export function openPanelTransport(options: {
   const send = options.fetch ?? globalThis.fetch;
   return (report, signal) =>
     telemetryIO(async () => {
+      // Local privacy mode: nothing is sent. The report is refused and never reaches the network.
+      if (LOCAL_PRIVACY_MODE) return false;
       const response = await send(options.endpoint ?? "https://analytics.openbot.run/api/track", {
         method: "POST",
         signal,

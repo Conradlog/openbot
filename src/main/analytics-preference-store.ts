@@ -1,4 +1,5 @@
 import type { AnalyticsPreference } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { isBoolean, isDynamicRecord, isNumber } from "@openbot/contracts/runtime-values";
 import { Effect } from "effect";
 import { isMissingFileError } from "../backend/file-errors";
@@ -47,7 +48,10 @@ export const readSavedAnalyticsPreference = Effect.fn("readSavedAnalyticsPrefere
  */
 export const readAnalyticsPreference = Effect.fn("readAnalyticsPreference")((path: string, setupCompleted: boolean) =>
   readSavedAnalyticsPreference(path).pipe(
-    Effect.map((saved): AnalyticsPreference => ({ enabled: saved?.enabled ?? setupCompleted })),
+    // Local privacy mode: the answer is always "off", whatever an older file says.
+    Effect.map(
+      (saved): AnalyticsPreference => ({ enabled: !LOCAL_PRIVACY_MODE && (saved?.enabled ?? setupCompleted) }),
+    ),
   ),
 );
 
@@ -78,10 +82,13 @@ export function writeAnalyticsPreference(
   keepOff: boolean,
   unsentAt: number | null = null,
 ): Effect.Effect<AnalyticsPreference, PreferenceFileFailure> {
+  // Local privacy mode: "on" cannot be saved, and no choice is left unsent for the account.
+  const saved = LOCAL_PRIVACY_MODE ? false : enabled;
+  const unsent = LOCAL_PRIVACY_MODE ? null : unsentAt;
   return writePreferenceFile(path, {
     version: 1,
-    enabled,
-    keepOff: !enabled && keepOff,
-    ...(unsentAt === null ? {} : { unsentAt }),
-  }).pipe(Effect.as({ enabled }));
+    enabled: saved,
+    keepOff: !saved && keepOff,
+    ...(unsent === null ? {} : { unsentAt: unsent }),
+  }).pipe(Effect.as({ enabled: saved }));
 }

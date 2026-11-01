@@ -14,6 +14,7 @@ import {
   type UsageTokens,
   WORKFLOW_RUN_SOURCES,
 } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { isBoolean, isDynamicRecord, isFunction, isNumber, isOneOf, isString } from "@openbot/contracts/runtime-values";
 import { normalizeEmailAddress } from "@openbot/contracts/validation";
 import {
@@ -337,8 +338,9 @@ export class HostAnalytics {
     this.#resolveInventory = options.resolveInventory;
     this.#inventoryDayStore = options.inventoryDay;
     this.#resources = options.resources;
-    this.#trackingEnabled = options.trackingEnabled ?? true;
-    if (!options.enabled) {
+    // Local privacy mode: tracking is always off and no OpenPanel client is made.
+    this.#trackingEnabled = LOCAL_PRIVACY_MODE ? false : (options.trackingEnabled ?? true);
+    if (LOCAL_PRIVACY_MODE || !options.enabled) {
       this.#client = null;
       return;
     }
@@ -617,7 +619,8 @@ export class HostAnalytics {
   }
 
   setTrackingEnabled(enabled: boolean): void {
-    if (this.#trackingEnabled === enabled) return;
+    // Local privacy mode: tracking cannot be turned on.
+    if (LOCAL_PRIVACY_MODE || this.#trackingEnabled === enabled) return;
     this.#trackingEnabled = enabled;
     this.#configureReports();
     if (!enabled) {
@@ -944,7 +947,8 @@ export class HostAnalytics {
   }
 
   #enqueue(kind: AnalyticsOperationKind, run: () => unknown): void {
-    if (this.#closed) return;
+    // Local privacy mode: nothing is queued for the analytics client.
+    if (LOCAL_PRIVACY_MODE || this.#closed) return;
     const hasPendingTrack = this.#operationQueue.operations.some((operation) => operation.kind === "track");
     if (kind === "clear" && !hasPendingTrack) {
       this.#operationQueue.operations = [];

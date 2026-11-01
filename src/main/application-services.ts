@@ -2663,7 +2663,9 @@ export async function createApplicationServices({
     throw new Error(`Unsupported analytics platform: ${analyticsPlatform}`);
   }
   performance.mark("openbot:services.remote-desktop");
-  const analyticsEnabled = (app.isPackaged && appVariant === "production") || analyticsCaptureUrl !== null;
+  // Local privacy mode: no analytics client and no failure report queue are ever made.
+  const analyticsEnabled =
+    !LOCAL_PRIVACY_MODE && ((app.isPackaged && appVariant === "production") || analyticsCaptureUrl !== null);
   const failureReports = analyticsEnabled
     ? new ReportQueue(
         fileReportStorage(join(app.getPath("userData"), "openbot-error-reports-v1.json")),

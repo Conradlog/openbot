@@ -1,3 +1,4 @@
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { isDynamicRecord } from "@openbot/contracts/runtime-values";
 import { Effect, Schema, Semaphore } from "effect";
 import { type FailureProperties, isReportProfileId, type Report, type ReportContext, safeReport } from "./events";
@@ -46,6 +47,8 @@ export class ReportQueue {
 
   /** Invalidate scopes and abort immediately, before waiting for a storage write. */
   configure(enabled: boolean, profileId: string | null): Effect.Effect<void> {
+    // Local privacy mode: reports are never enabled, so none is kept or sent.
+    if (LOCAL_PRIVACY_MODE && enabled) return this.configure(false, profileId);
     if (!isReportProfileId(profileId)) return this.configure(false, null);
     if (this.#closed || (this.#configured && this.#enabled === enabled && this.#profileId === profileId))
       return Effect.void;
@@ -84,7 +87,7 @@ export class ReportQueue {
   }
 
   record(name: Report["name"], properties: FailureProperties, timestamp = this.now()): Effect.Effect<void> {
-    if ((this.#configured && !this.#enabled) || this.#closed || this.#closing) return Effect.void;
+    if (LOCAL_PRIVACY_MODE || (this.#configured && !this.#enabled) || this.#closed || this.#closing) return Effect.void;
     const generation = this.#generation;
     const report = safeReport({
       ...this.context,
@@ -197,7 +200,7 @@ export class ReportQueue {
 
   /** Startup, online, foreground and retry callbacks all use this one sender. */
   readonly flush = Effect.fn("ReportQueue.flush")(function* (this: ReportQueue) {
-    if (this.#active || !this.#enabled || this.#closed || this.#closing) return;
+    if (LOCAL_PRIVACY_MODE || this.#active || !this.#enabled || this.#closed || this.#closing) return;
     this.#active = true;
     clearTimeout(this.#timer);
     this.#timer = undefined;

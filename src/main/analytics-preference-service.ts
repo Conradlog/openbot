@@ -1,4 +1,5 @@
 import type { CentralAuthState, CentralAuthUser } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { createOpenBotLogger, toLogValue } from "@openbot/logging";
 import { Effect, Semaphore } from "effect";
 import {
@@ -56,6 +57,8 @@ export class AnalyticsPreferenceService {
 
   /** The answer of the signed-in account from any device, or null when it has none. */
   accountAnswer(): boolean | null {
+    // Local privacy mode: the account answer is not read.
+    if (LOCAL_PRIVACY_MODE) return null;
     const state = this.#account.getState();
     return state.status === "signed_in" ? (state.user.analyticsEnabled ?? null) : null;
   }
@@ -79,12 +82,14 @@ export class AnalyticsPreferenceService {
         Effect.uninterruptible,
       ),
     );
-    if (chosen) this.#run(this.#sendUnsent(), "The account did not save the analytics answer.");
+    if (chosen && !LOCAL_PRIVACY_MODE) this.#run(this.#sendUnsent(), "The account did not save the analytics answer.");
     return preference;
   }).bind(this);
 
   /** Runs on each account change. A signed-in account brings its answer, or receives the unsent one. */
   followAccount(user: CentralAuthUser): void {
+    // Local privacy mode: the account is never asked and never changes the answer.
+    if (LOCAL_PRIVACY_MODE) return;
     this.#run(this.#follow(user), "The analytics answer did not sync.");
   }
 
@@ -138,7 +143,8 @@ export class AnalyticsPreferenceService {
     enabled: boolean,
     unsentAt: number,
   ) {
-    if (this.#account.getState().status !== "signed_in") return undefined;
+    // Local privacy mode: no request to the account.
+    if (LOCAL_PRIVACY_MODE || this.#account.getState().status !== "signed_in") return undefined;
     const state = yield* this.#account.updateAnalytics(enabled, Math.max(0, Date.now() - unsentAt));
     return state.status === "signed_in" ? (state.user.analyticsEnabled ?? null) : undefined;
   }).bind(this);

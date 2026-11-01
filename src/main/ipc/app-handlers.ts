@@ -15,6 +15,7 @@ import {
   externalLinkAppName,
   GROK_BOT_EXPORT_URL,
 } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { analyticsOnByDefault } from "@openbot/telemetry";
 import { app, type BrowserWindow, dialog, type OpenDialogOptions } from "electron";
 import { version as developmentVersion } from "../../../package.json";
@@ -185,9 +186,11 @@ export function appIpcHandlers({
       // An answer the user gave on another device comes before the regional default.
       getAnalyticsDefault: handler(
         (): AnalyticsPreference => ({
+          // Local privacy mode: analytics is never on by default.
           enabled:
-            analyticsPreferences.accountAnswer() ??
-            analyticsOnByDefault(app.getLocaleCountryCode(), Intl.DateTimeFormat().resolvedOptions().timeZone),
+            !LOCAL_PRIVACY_MODE &&
+            (analyticsPreferences.accountAnswer() ??
+              analyticsOnByDefault(app.getLocaleCountryCode(), Intl.DateTimeFormat().resolvedOptions().timeZone)),
         }),
       ),
       setAnalyticsPreference: payloadHandler(parseAnalyticsPreference, (parsed) =>

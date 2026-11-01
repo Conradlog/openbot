@@ -1,4 +1,5 @@
 import type { AppInfo, CentralAuthUser } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { isBoolean, isDynamicRecord, isNumber } from "@openbot/contracts/runtime-values";
 import {
   ANALYTICS_GENERATIONS,
@@ -33,6 +34,8 @@ export function configureDesktopReports(
   tracking: boolean,
   user: Pick<CentralAuthUser, "id" | "email"> | null,
 ): void {
+  // Local privacy mode: no failure report queue is made.
+  if (LOCAL_PRIVACY_MODE) return;
   const capture = info.analyticsCaptureUrl;
   if (capture === undefined && (!import.meta.env.PROD || info.variant !== "production")) return;
   queue ??= new ReportQueue(
@@ -52,7 +55,8 @@ export function configureDesktopReports(
 }
 
 export function configureErrorReports(tracking: boolean, accountId: string | null = profileId): void {
-  enabled = tracking;
+  // Local privacy mode: failure reports are never enabled.
+  enabled = tracking && !LOCAL_PRIVACY_MODE;
   profileId = accountId;
   if (queue) {
     const initial = !configured;
@@ -83,6 +87,8 @@ let webChoice: boolean | null = null;
  * browser uses the default of its region until the sign-in screen saves a choice.
  */
 export function webReportsEnabled(): boolean {
+  // Local privacy mode: always off.
+  if (LOCAL_PRIVACY_MODE) return false;
   try {
     const stored = localStorage.getItem(WEB_PREFERENCE);
     if (stored !== null) return stored === "true";
@@ -94,6 +100,7 @@ export function webReportsEnabled(): boolean {
 
 /** True when this browser saved "on". The sign-in screen then keeps it and does not ask again. */
 export function webReportsAgreed(): boolean {
+  if (LOCAL_PRIVACY_MODE) return false;
   try {
     return localStorage.getItem(WEB_PREFERENCE) === "true";
   } catch {
@@ -113,6 +120,8 @@ function webAnalyticsDefault(): boolean {
 
 export function configureWebReports(user: Pick<CentralAuthUser, "id" | "email"> | null): void {
   webSignedIn = user !== null;
+  // Local privacy mode: no failure report queue is made.
+  if (LOCAL_PRIVACY_MODE) return;
   if (!import.meta.env.PROD || window.location.origin !== "https://openbot.run") return;
   queue ??= new ReportQueue(
     indexedReportStorage("openbot-web-error-reports-v1"),
@@ -136,6 +145,11 @@ export function webKeepsOff(): boolean {
 }
 
 export function setWebReportsEnabled(value: boolean): boolean {
+  // Local privacy mode: an answer is not saved and failure reports stay off.
+  if (LOCAL_PRIVACY_MODE) {
+    configureErrorReports(false);
+    return enabled;
+  }
   // Disable first. A failed write must never permit a pending send.
   if (!value) configureErrorReports(false);
   webChoice = value;
@@ -160,6 +174,8 @@ export interface WebAccountPending {
 
 /** The user's choice that the account must still save, so their other devices follow it. */
 export function webAccountPending(): WebAccountPending | null {
+  // Local privacy mode: no choice is waiting for the account.
+  if (LOCAL_PRIVACY_MODE) return null;
   try {
     const stored = JSON.parse(localStorage.getItem(WEB_ACCOUNT_PENDING) ?? "null");
     return isDynamicRecord(stored) && isBoolean(stored.enabled) && isNumber(stored.at)
@@ -172,6 +188,8 @@ export function webAccountPending(): WebAccountPending | null {
 
 /** Marks a choice that the account must save, or clears it after the account has it. */
 export function setWebAccountPending(value: boolean | null): void {
+  // Local privacy mode: no choice is kept for the account.
+  if (LOCAL_PRIVACY_MODE) return;
   try {
     if (value === null) localStorage.removeItem(WEB_ACCOUNT_PENDING);
     else localStorage.setItem(WEB_ACCOUNT_PENDING, JSON.stringify({ enabled: value, at: Date.now() }));
@@ -181,6 +199,8 @@ export function setWebAccountPending(value: boolean | null): void {
 }
 
 export function reportNotification(properties: FailureProperties): void {
+  // Local privacy mode: notifications are not recorded for reports.
+  if (LOCAL_PRIVACY_MODE) return;
   if (queue) Effect.runFork(queue.record("notification_shown", properties));
   else if (!configured) {
     const safe = safeProperties(properties);

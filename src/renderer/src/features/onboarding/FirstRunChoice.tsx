@@ -3,7 +3,7 @@ import { Button, ChevronRight, Spinner } from "@openbot/ui";
 import { AgentAvatar } from "@openbot/ui/features/agents/AgentAvatar";
 import { useText } from "@openbot/ui/text";
 import { createUniqueId, For, Show } from "solid-js";
-import { AnalyticsConsentRow, ConsentNotice } from "./AnalyticsConsent";
+import { ConsentNotice } from "./AnalyticsConsent";
 import type { OnboardingAvatarVariant } from "./onboarding-avatars";
 
 export interface FirstRunChoiceProps {
@@ -103,12 +103,7 @@ export function FirstRunChoice(props: FirstRunChoiceProps) {
           </span>
           <ChevronRight class="first-run-choice-row-chevron" aria-hidden="true" />
         </Button>
-        <AnalyticsConsentRow
-          checked={props.analytics}
-          disabled={props.disabled}
-          agents={props.team.slice(2, 5)}
-          onChange={(enabled) => props.onAnalyticsChange(enabled)}
-        />
+        {/* Local privacy mode: the analytics box is not shown. Analytics is always off. */}
       </div>
       <ConsentNotice onOpenTerms={() => props.onOpenTerms()} onOpenPrivacy={() => props.onOpenPrivacy()} />
       <Show when={props.reason}>
