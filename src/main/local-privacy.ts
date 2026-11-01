@@ -27,7 +27,7 @@ const logger = createOpenBotLogger("local-privacy");
  */
 export const LOCAL_ACCOUNT: CentralAuthUser = {
   id: "local-privacy-user",
-  email: "local@localhost",
+  email: "local@local.invalid",
   name: null,
   avatarUrl: null,
   analyticsEnabled: false,
@@ -101,4 +101,16 @@ export function startBlockedRequestLog(): void {
       repeatedSinceLast: previous?.suppressed ?? 0,
     });
   });
+}
+
+const VERIFICATION_PROXY = /^http:\/\/127\.0\.0\.1:\d{2,5}$/u;
+
+/**
+ * For a manual check only: `OPENBOT_LOCAL_PRIVACY_PROXY=http://127.0.0.1:18080` sends all Chromium
+ * traffic through the logging proxy of `scripts/local-privacy-egress-proxy.ts`. Only a proxy on this
+ * computer is accepted, so the variable cannot send traffic to another host. Call it before `ready`.
+ */
+export function applyVerificationProxy(): void {
+  const proxy = process.env.OPENBOT_LOCAL_PRIVACY_PROXY;
+  if (proxy && VERIFICATION_PROXY.test(proxy)) app.commandLine.appendSwitch("proxy-server", proxy);
 }

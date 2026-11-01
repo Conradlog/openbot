@@ -1,4 +1,5 @@
 import { isUpdateActivePhase } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { AGENT_TASKS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-tasks-v1";
 import type { SidebarView } from "@openbot/ui/features/sidebar/sidebar-types";
 import { PageRail, type PageRailPage } from "@openbot/ui/features/window/PageRail";
@@ -78,7 +79,8 @@ export function WorkspacePageRail(props: { hidden: boolean }) {
       onSchedule={windowPage.openSchedule}
       onTasks={tasksAvailable() ? windowPage.openTasks : undefined}
       onUsage={windowPage.openUsage}
-      onMarketplace={() => setSkillsMarketplaceOpen(true)}
+      // Local privacy mode: the Marketplace is served by the account service, which is off.
+      onMarketplace={LOCAL_PRIVACY_MODE ? undefined : () => setSkillsMarketplaceOpen(true)}
       onSettings={(button) => (updateNotice() ? openAppSettings(button, "updates") : windowPage.openSettings(button))}
       settingsNotice={updateNotice()}
       logo={logo()}

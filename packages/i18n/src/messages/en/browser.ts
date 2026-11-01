@@ -29,7 +29,7 @@ export const messages = defineMessages("browser", {
   "browser.empty.title": "Open a page",
   "browser.empty.description": "The agent can browse here while it works.",
   "browser.address.label": "Browser address",
-  "browser.address.placeholder": "Search Google or enter a URL",
+  "browser.address.placeholder": "Enter a URL",
   "browser.tabs.label": "Browser tabs",
   "browser.tab.controlledBy": "{title}, controlled by {name}",
   "browser.tab.controllerFallback": "agent",

@@ -30,7 +30,7 @@ export const messages = {
   "browser.empty.title": "Apri una pagina",
   "browser.empty.description": "L'agente può navigare qui mentre lavora.",
   "browser.address.label": "Indirizzo del browser",
-  "browser.address.placeholder": "Cerca su Google o inserisci un URL",
+  "browser.address.placeholder": "Inserisci un URL",
   "browser.tabs.label": "Schede del browser",
   "browser.tab.controlledBy": "{title}, controllata da {name}",
   "browser.tab.controllerFallback": "agente",

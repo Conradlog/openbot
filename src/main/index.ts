@@ -111,7 +111,7 @@ import { stopAppImageCrashpadHandlerAtExit } from "./linux-appimage-crashpad";
 import { installLinuxDesktopEntry } from "./linux-desktop-entry";
 import { configureLinuxGpu } from "./linux-gpu-mode";
 import { configureLinuxPasswordStore } from "./linux-password-store";
-import { installLocalPrivacyGuards, startBlockedRequestLog } from "./local-privacy";
+import { applyVerificationProxy, installLocalPrivacyGuards, startBlockedRequestLog } from "./local-privacy";
 import { takeLocalServerChildEnvironment } from "./local-server-child";
 import { MacHapticFeedback } from "./mac-haptic-feedback";
 import {
@@ -246,6 +246,7 @@ if (commandLineUserDataDirectory) {
   );
 }
 app.setName("OpenBot");
+applyVerificationProxy();
 app.enableSandbox();
 if (process.platform === "win32") app.setAppUserModelId("app.openbot.desktop");
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
