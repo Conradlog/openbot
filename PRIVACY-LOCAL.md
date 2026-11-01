@@ -62,10 +62,13 @@ real-app egress run below), **audit** (`bun run test:local-privacy`).
 ## What still leaves the computer, and why
 
 - **Provider traffic.** Each agent talks to its provider. The CLIs decide the exact hosts. In the
-  real run these were `chatgpt.com` (Codex) and `api.anthropic.com` (Claude).
+  real run these were `chatgpt.com` (Codex) and `api.anthropic.com` (Claude). Codex and OpenCode start
+  at launch and Codex contacts `chatgpt.com` before any turn.
 - **Pages you open.** `example.com` in the run.
-- **`registry.npmjs.org`.** One connection at start in the run. I did not find which process makes it
-  (see "Not verified").
+- **`registry.npmjs.org`.** One connection at start. A second run with a process poller showed the
+  source: `npm exec rea-agents@6.4.0 mcp`, an MCP server from the Codex configuration of the test
+  computer, started by the Codex `app-server`. It is not OpenBot code. It is an MCP server that you
+  turned on, so it is allowed.
 - **MCP servers and their authorization services**, when you add one.
 - **Clicks:** installing or checking a CLI, downloading a voice model, the Bun runtime when you save
   an MCP server.
@@ -111,9 +114,10 @@ real-app egress run below), **audit** (`bun run test:local-privacy`).
      --user-data-dir=/tmp/openbot-egress-profile --use-mock-keychain
    ```
 
-   Every host in `egress.jsonl` must be a provider, a page that you opened, or `localhost`. The proxy
-   logs the host and the port only. It does not open TLS. This run is not packaged, so it does not
-   run the packaged-only code (see "Not verified").
+   Every host in `egress.jsonl` must be a provider, an MCP server that you turned on, a page that you
+   opened, or `localhost`. The proxy logs the host and the port only. It does not open TLS. To see
+   which process connects, poll `lsof -nP -iTCP:18080 -sTCP:ESTABLISHED` while the app starts. This
+   run is not packaged, so it does not run the packaged-only code (see "Not verified").
 
 3. Your own check on macOS, which also covers the packaged app: install LuLu or Little Snitch, start
    the app, and use it for a few minutes (start, new agent, one turn, the browser, Settings). Allow
@@ -154,8 +158,15 @@ The files that only this branch owns: `packages/contracts/src/local-privacy.ts`,
   `https://api.openbot.run` account URL run only in a packaged app. They are off by code and blocked
   by the guard, and the audit checks the guard, but I did not run a packaged app. Use LuLu or Little
   Snitch for that.
-- **`registry.npmjs.org`** (one connection at start). Not found in OpenBot code. Probably a provider
-  CLI. I did not attribute it.
+- **What the proxy can see.** It saw Chromium and every program that honors `HTTPS_PROXY`. The Node
+  of Electron 44 is version 24.22 and honors `NODE_USE_ENV_PROXY=1`: a probe with Electron in Node
+  mode sent a `fetch` through the proxy. I did not prove it for the main process of the app itself.
+  The guard log covers the `openbot.run` and `nightly-labs` paths of the main process in any case.
+  A program that ignores both the proxy variables and Chromium settings is not seen: that is why
+  step 3 (LuLu or Little Snitch) is worth doing.
+- **Picture-in-picture and the dock overlay.** They load OpenBot's own pages in the default session,
+  which is strict. Browser tabs keep their own session. I read the code and did not open them in the
+  run.
 - **Provider CLI hosts.** The Node guard does not see them (they are other programs). The list comes
   from the run, for the CLIs that are installed on the test computer and signed in (Codex, Claude,
   OpenCode). Grok, Cursor, Cline, Pi, Gemini and Muse were not installed or not started.
