@@ -29,6 +29,12 @@ import { createOpenBotLogger, redactText } from "@openbot/logging";
 import { Effect } from "effect";
 import { McpGateway } from "../src/backend/agent/mcp-gateway";
 import { runCauseEffect } from "../src/backend/effect-boundary";
+import {
+  MCP_CLIENT_NAME,
+  MCP_CLIENT_USER_AGENT,
+  MCP_CLIENT_VERSION,
+  MCP_OAUTH_CLIENT_NAME,
+} from "../src/backend/mcp-client-identity";
 import { toMcpOperationError } from "../src/backend/mcp-effects";
 import {
   McpOAuth,
@@ -724,46 +730,44 @@ async function proxyCases(auth: Awaited<ReturnType<typeof startAuthorizationServ
     assert.ok(upstream.every((hit) => hit.authorization === "Bearer access-on-file" && hit.rowKey === "row-secret"));
     const echo = { text: "through", upstreamToken: "access-on-file", rowHeaderUpstream: true };
 
-    // The server sees OpenBot as the client, not the provider, and the agent of the route by name.
-    const openbotClient = (title: string) => ({
-      name: "openbot",
-      title,
-      version: "9.9.9-e2e",
-      websiteUrl: "https://openbot.run",
-    });
-    assert.deepEqual(resource.clients.at(-1), openbotClient("OpenBot"));
-    assert.ok(upstream.every((hit) => hit.userAgent === "OpenBot/9.9.9-e2e"));
-    const titleOf = async (route: { url: string; bearer: string }) => {
+    // Local privacy mode: the server sees one generic client, whatever the provider, the app version
+    // or the agent of the route. Exactly a name and a version: no title, no website, no agent name.
+    const genericClient = { name: MCP_CLIENT_NAME, version: MCP_CLIENT_VERSION };
+    assert.deepEqual(resource.clients.at(-1), genericClient);
+    assert.ok(upstream.every((hit) => hit.userAgent === MCP_CLIENT_USER_AGENT));
+    const clientOf = async (route: { url: string; bearer: string }) => {
       const before = resource.clients.length;
       const named = await connect(route.url, route.bearer);
       assert.equal(textOf(await named.callTool({ name: "echo", arguments: { text: "named" } })), "named");
       assert.equal(resource.clients.length, before + 1);
-      const info = resource.clients.at(-1);
-      assert.deepEqual(info, openbotClient(info?.title ?? ""));
-      return info?.title;
+      assert.deepEqual(resource.clients.at(-1), genericClient);
     };
     const researchRoute = await endpointOf(gateway, direct, "agent-research");
     assert.notEqual(researchRoute.url, directRoute.url);
-    assert.equal(await titleOf(researchRoute), "Research Bot (OpenBot)");
-    assert.equal(await titleOf(chiefRoute), "Ops Bot (OpenBot)");
+    await clientOf(researchRoute);
+    await clientOf(chiefRoute);
     const research = agents[0];
     assert.ok(research);
     research.name = "Renamed Bot";
-    assert.equal(await titleOf(researchRoute), "Renamed Bot (OpenBot)");
-    assert.equal(await titleOf(await endpointOf(gateway, direct, "removed-agent")), "OpenBot");
+    await clientOf(researchRoute);
+    await clientOf(await endpointOf(gateway, direct, "removed-agent"));
     // The bearer of a route opens neither the same row for another agent nor the row with no agent.
     const hitsBeforeCross = resource.hits.length;
     assert.equal(await rawPost(researchRoute.url, { authorization: `Bearer ${directRoute.bearer}` }), 403);
     assert.equal(await rawPost(directRoute.url, { authorization: `Bearer ${researchRoute.bearer}` }), 403);
     assert.equal(await rawPost(chiefRoute.url, { authorization: `Bearer ${researchRoute.bearer}` }), 403);
     assert.equal(resource.hits.length, hitsBeforeCross, "A request with another route's bearer reached the server.");
+    // Nothing that names the app, an agent or the app version reached the MCP server or the
+    // authorization server: not in `clientInfo`, not in a `User-Agent`, not in a registration.
+    const seenByServer = JSON.stringify([resource.clients, resource.hits.map((hit) => hit.userAgent), auth.hits]);
+    for (const leak of ["openbot", "Research", "Ops", "Renamed", "9.9.9-e2e"])
+      assert.ok(!seenByServer.toLowerCase().includes(leak.toLowerCase()), `"${leak}" reached a remote server.`);
+    assert.ok(!/openbot/iu.test(MCP_OAUTH_CLIENT_NAME), "The registered client name names the app.");
     const clientIdentity = {
-      withoutAgent: "OpenBot",
-      agent: "Research Bot (OpenBot)",
-      controlCharacters: "Ops Bot (OpenBot)",
-      renamed: "Renamed Bot (OpenBot)",
-      unknownAgent: "OpenBot",
-      userAgent: "OpenBot/9.9.9-e2e",
+      clientInfo: genericClient,
+      userAgent: MCP_CLIENT_USER_AGENT,
+      registeredClientName: MCP_OAUTH_CLIENT_NAME,
+      agentNamesAndAppVersionSent: false,
       crossAgentBearers: 403,
     };
 

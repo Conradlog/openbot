@@ -21,6 +21,7 @@ import { createOpenBotLogger, redactText, registerSecretValue, toLogValue } from
 import { Deferred, Effect, Exit, type Layer, Result, Scope, Semaphore } from "effect";
 import { z } from "zod";
 import { writeFileAtomically } from "../backend/atomic-json-file";
+import { MCP_CLIENT_USER_AGENT } from "../backend/mcp-client-identity";
 import { GitHubBotTokens } from "./github-bot-tokens";
 import type { GitHubAppConfig } from "./github-connector-config";
 import type { GitHubConnectorRecord, GitHubConnectorStore } from "./github-connector-store";
@@ -705,7 +706,7 @@ export class GitHubConnectorService {
           headers: {
             Accept: "application/vnd.github+json",
             Authorization: `Bearer ${accessToken}`,
-            "User-Agent": "OpenBot",
+            "User-Agent": MCP_CLIENT_USER_AGENT,
             "X-GitHub-Api-Version": "2022-11-28",
           },
         }),

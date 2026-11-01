@@ -50,6 +50,7 @@ import type { Logger } from "@openbot/logging";
 import { z } from "zod";
 import { runCauseEffect } from "./effect-boundary";
 import { readLimitedBody } from "./limited-body";
+import { MCP_OAUTH_CLIENT_NAME } from "./mcp-client-identity";
 import {
   type AddressLookup,
   type AddressLookupError,
@@ -844,7 +845,7 @@ class McpOAuthClientProvider implements OAuthClientProvider {
   }
 
   /**
-   * What OpenBot registers itself as. `redirect_uris` holds the one address this run receives on,
+   * What this app registers itself as (generic in local privacy mode). `redirect_uris` holds the one address this run receives on,
    * so an authorization server will not send a grant anywhere else.
    *
    * No `scope` unless a sign-in app names one: the SDK takes the scope the server's own
@@ -864,9 +865,8 @@ class McpOAuthClientProvider implements OAuthClientProvider {
     const scope = this.#record().app?.scope;
     const methods = this.#discoveryState?.authorizationServerMetadata?.token_endpoint_auth_methods_supported;
     return {
-      client_name: "OpenBot",
-      client_uri: "https://openbot.run",
-      logo_uri: "https://openbot.run/icon-512x512.png",
+      // Local privacy mode: a generic name, and no client_uri or logo_uri (optional in RFC 7591).
+      client_name: MCP_OAUTH_CLIENT_NAME,
       redirect_uris: [this.#options.redirectUrl],
       grant_types: ["authorization_code", "refresh_token"],
       response_types: ["code"],

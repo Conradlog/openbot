@@ -15,6 +15,7 @@ import { sourceText } from "@openbot/i18n/source";
 import { redactText } from "@openbot/logging";
 import { Effect } from "effect";
 import { z } from "zod";
+import { MCP_CLIENT_USER_AGENT } from "../backend/mcp-client-identity";
 import type {
   WorkflowGitHubApi,
   WorkflowGitHubApiFailure,
@@ -111,7 +112,7 @@ export function createGitHubRest(options: GitHubRestOptions): WorkflowGitHubApi 
         headers: {
           Accept: "application/vnd.github+json",
           Authorization: `Bearer ${token}`,
-          "User-Agent": "OpenBot",
+          "User-Agent": MCP_CLIENT_USER_AGENT,
           "X-GitHub-Api-Version": "2022-11-28",
           ...(body ? { "Content-Type": "application/json" } : {}),
         },

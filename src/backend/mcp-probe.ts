@@ -12,6 +12,7 @@ import { isDynamicRecord } from "@openbot/contracts/runtime-values";
 import { sourceText } from "@openbot/i18n/source";
 import { Effect, Result, Schema } from "effect";
 import { causeHelpers } from "./effect-boundary";
+import { MCP_CLIENT_NAME, MCP_CLIENT_VERSION } from "./mcp-client-identity";
 import {
   isLoopback,
   type McpOAuthAuthority,
@@ -300,7 +301,7 @@ const connectAndCountEffect = Effect.fnUntraced(function* (
   return yield* Effect.acquireUseRelease(
     Effect.try({
       try: () => ({
-        client: new Client({ name: "openbot-probe", version: "1" }, { capabilities: {} }),
+        client: new Client({ name: MCP_CLIENT_NAME, version: MCP_CLIENT_VERSION }, { capabilities: {} }),
         transport: createTransport(server, signIn, onChallenge),
       }),
       catch: (cause) => new McpProbeFailure({ cause }),

@@ -74,7 +74,7 @@ export interface McpGatewayOptions {
   credentials: ProviderClientContext;
   computerUseMcpServer: () => McpServerConfig | null;
   githubConnector?: GitHubConnectorSource | null;
-  /** The agents, read when a server signed in through the proxy opens a session, for their names. */
+  /** Unused in local privacy mode: agent names are no longer sent to a server. Kept so callers still compile. */
   agents?: () => ReadonlyArray<{ id: string; name: string }>;
   /** The agent service logger, so a drop report keeps the `agent-service` prefix it always had. */
   logger: Logger;
@@ -130,22 +130,12 @@ export class McpGateway {
     this.#logger = options.logger;
     this.#hooks = options.hooks;
     const oauth = this.#oauth;
-    const agents = options.agents;
+    // Local privacy mode: the proxy sends a generic client identity, so the agents and the app
+    // version are no longer read here.
     this.#proxy = new McpOAuthProxy({
       settings: credentials.mcpOAuthProxySettings ?? null,
       target: (route) => this.#proxyTarget(route),
       refresh: (url, rejected) => (oauth ? oauth.refreshAccessToken(url, rejected) : Effect.succeed(null)),
-      ...(credentials.appVersion
-        ? {
-            client: {
-              version: credentials.appVersion,
-              // A scan, not a map filled by `endpoint`: a Codex session resumed after a restart sends
-              // its agent route before this process hands out any route.
-              agentName: (agentKey) =>
-                agents?.().find((agent) => mcpOAuthProxyAgentKey(agent.id) === agentKey)?.name ?? null,
-            },
-          }
-        : {}),
     });
   }
 

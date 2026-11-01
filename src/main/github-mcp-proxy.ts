@@ -24,6 +24,7 @@ import { isDynamicRecord, isString } from "@openbot/contracts/runtime-values";
 import { createOpenBotLogger, toLogValue } from "@openbot/logging";
 import { runCauseEffect } from "../backend/effect-boundary";
 import { readJsonBody } from "../backend/local-mcp-bridge";
+import { MCP_CLIENT_NAME, MCP_CLIENT_VERSION } from "../backend/mcp-client-identity";
 
 const logger = createOpenBotLogger("github-mcp-proxy");
 
@@ -276,7 +277,7 @@ export class GitHubMcpProxy {
   ): Effect.fn.Return<Client, GitHubOperationError> {
     let upstream = this.#upstreams.get(token);
     if (!upstream) {
-      const client = new Client({ name: "openbot-github-proxy", version: "1.0.0" }, { capabilities: {} });
+      const client = new Client({ name: MCP_CLIENT_NAME, version: MCP_CLIENT_VERSION }, { capabilities: {} });
       const transport = new StreamableHTTPClientTransport(new URL(this.#options.upstreamUrl), {
         requestInit: { headers: { Authorization: `Bearer ${token}` } },
       });
