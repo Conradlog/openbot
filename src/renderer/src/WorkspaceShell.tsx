@@ -1,4 +1,5 @@
 import type { CentralAuthUser } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { AGENT_TASKS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-tasks-v1";
 import {
   ConversationLoadNotice,
@@ -279,7 +280,10 @@ export function WorkspaceShell(props: { account: () => CentralAuthUser }) {
           sidebarHidden={tasksAgentsHidden()}
           left={
             <Show when={!chatWindow}>
-              <WorkspaceServerRail />
+              {/* Local privacy mode: there are no remote or hosted servers to switch to. */}
+              <Show when={!LOCAL_PRIVACY_MODE}>
+                <WorkspaceServerRail />
+              </Show>
               <WorkspaceSidebar peopleEnabled={activePeopleEnabled()} />
             </Show>
           }

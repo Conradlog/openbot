@@ -1,6 +1,7 @@
 // The installation tokens of the OpenBot GitHub App that the OpenBot API gives this computer, so
 // that GitHub shows an agent's work as the app and not as the signed-in user.
 
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { createOpenBotLogger, registerSecretValue, toLogValue } from "@openbot/logging";
 import { Effect } from "effect";
 import { z } from "zod";
@@ -106,6 +107,12 @@ export class GitHubBotTokens {
     signal?: AbortSignal,
   ): Effect.fn.Return<void, GitHubOperationError> {
     const epoch = this.#epoch;
+    if (LOCAL_PRIVACY_MODE) {
+      // Local privacy mode: the GitHub token never goes to the OpenBot API. Agents act as the user.
+      this.#byRepository = new Map();
+      this.#nextAt = this.#now() + RETRY_MS;
+      return;
+    }
     yield* Effect.gen({ self: this }, function* () {
       const response = yield* githubCall((fiberSignal) =>
         this.#fetch(new URL("/v1/github/installation-tokens", this.#apiUrl).toString(), {

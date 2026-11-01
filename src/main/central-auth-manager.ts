@@ -87,6 +87,11 @@ interface CentralAuthManagerOptions {
   startupRequestTimeoutMs?: number;
   startupRetryDelaysMs?: readonly number[];
   emailCodeRequestTimeoutMs?: number;
+  /**
+   * Local privacy mode: there is no account service. The manager opens as this fixed user and
+   * never calls the network. It holds no session token, so each authorized request fails here.
+   */
+  localAccount?: CentralAuthUser;
 }
 
 /** The persistent Mobile Connect link of this desktop. The account service keeps only its hash. */
@@ -165,7 +170,8 @@ export type VerifiedRemoteSessionTicket = Pick<
 };
 
 export class CentralAuthManager extends EventEmitter<CentralAuthEvents> {
-  readonly #options: Required<CentralAuthManagerOptions>;
+  readonly #options: Required<Omit<CentralAuthManagerOptions, "localAccount">>;
+  readonly #localAccount: CentralAuthUser | null;
   readonly #transport: Layer.Layer<CentralAuthTransport>;
   #state: CentralAuthState = { status: "loading" };
   #sessionToken: string | null = null;
@@ -187,9 +193,10 @@ export class CentralAuthManager extends EventEmitter<CentralAuthEvents> {
   #profileRefresh: Deferred.Deferred<CentralAuthState, CentralAuthOperationError> | null = null;
   #profileRefreshGeneration = 0;
 
-  constructor(options: CentralAuthManagerOptions) {
+  constructor({ localAccount, ...options }: CentralAuthManagerOptions) {
     super();
-    const fetcher = detectBlockingNetwork(options.fetch ?? fetch, options.apiUrl);
+    this.#localAccount = localAccount ?? null;
+    const fetcher = localAccount ? refuseNetwork : detectBlockingNetwork(options.fetch ?? fetch, options.apiUrl);
     this.#transport = CentralAuthTransport.layer(fetcher);
     this.#options = {
       ...options,
@@ -1398,6 +1405,8 @@ export class CentralAuthManager extends EventEmitter<CentralAuthEvents> {
     this: CentralAuthManager,
   ): Effect.fn.Return<CentralAuthState, CentralAuthOperationError, CentralAuthTransport> {
     this.#setState({ status: "loading" });
+    // Local privacy mode: open as the local user. No stored session is read and no request is made.
+    if (this.#localAccount) return this.#setState({ status: "signed_in", user: structuredClone(this.#localAccount) });
     // A session that cannot be read now stays on disk: a Keychain that is locked or asks for
     // permission at startup can open it at the next start, and the next sign-in replaces it.
     if (this.#options.canPersist()) {
@@ -2092,6 +2101,10 @@ const INTERCEPTED_TLS_CODES = new Set([
   "CERT_UNTRUSTED",
   "ERR_TLS_CERT_ALTNAME_INVALID",
 ]);
+
+/** Local privacy mode: the account transport. It never reaches the network. */
+const refuseNetwork: AuthFetcher = () =>
+  Promise.reject(new AuthApiError(503, "local_privacy_mode", sourceText("error.auth.serviceUnavailable")));
 
 function detectBlockingNetwork(fetcher: AuthFetcher, apiUrl: string): AuthFetcher {
   const blocked = () =>

@@ -13,12 +13,25 @@
  * functions from inside `app.whenReady()`.
  */
 
+import type { CentralAuthUser } from "@openbot/contracts/ipc";
 import { isLocalPrivacyStrictAllowed, localPrivacyBlock } from "@openbot/contracts/local-privacy";
 import { createOpenBotLogger } from "@openbot/logging";
 import { app, type Session, session } from "electron";
 import { type BlockedRequestEvent, onBlockedRequest, recordBlockedRequest } from "./local-privacy-node-guard";
 
 const logger = createOpenBotLogger("local-privacy");
+
+/**
+ * The account of this computer. There is no account service in local privacy mode, but the app
+ * and its stores are built around a signed-in user, so one fixed local user opens the app.
+ */
+export const LOCAL_ACCOUNT: CentralAuthUser = {
+  id: "local-privacy-user",
+  email: "local@localhost",
+  name: null,
+  avatarUrl: null,
+  analyticsEnabled: false,
+};
 
 type SessionClass = "strict" | "open";
 

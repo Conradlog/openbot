@@ -1,4 +1,5 @@
 import type { ServerSummary } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { AGENT_NOTIFICATION_LEVELS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-notification-levels-v1";
 import { BROWSER_PROFILES_CAPABILITY } from "@openbot/contracts/team-protocol/browser-profiles-v1";
 import { classifyFailure } from "@openbot/telemetry";
@@ -152,10 +153,12 @@ export function ConversationPanels(panelProps: { onOpenUsage?: ((trigger: HTMLBu
   /** The instruction file is in the agent's workspace on this computer. */
   const localInstructionsCalls = () =>
     props.server?.kind === "local" && !props.runtime ? instructionsCalls : undefined;
+  // Local privacy mode: publishing a template goes to the OpenBot account service.
   const canPublish = () =>
-    props.runtime
+    !LOCAL_PRIVACY_MODE &&
+    (props.runtime
       ? props.runtime.admin !== undefined && serverCanAdminister(props.server, "agent-publish-v1")
-      : props.server?.kind === "local";
+      : props.server?.kind === "local");
   // The web client asks the host directly; desktop goes through main for this computer and for a joined server.
   // The calls follow the server id, so a new summary of the same server keeps the loaded profiles.
   const browserProfileServerId = createMemo(() =>

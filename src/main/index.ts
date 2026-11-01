@@ -9,6 +9,7 @@ import {
   type HostStatus,
   IPC_ENDPOINTS,
 } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { createFormat, resolveLocale, translateFor } from "@openbot/i18n";
 import { localizeSourceText } from "@openbot/i18n/source";
 import { createOpenBotLogger, toLogValue } from "@openbot/logging";
@@ -1009,6 +1010,8 @@ function forwardCentralAuth(state: CentralAuthState): void {
  * cold start work: the window that the link itself opened asks for it once it is ready.
  */
 function acceptDeepLink(link: DeepLink): void {
+  // Local privacy mode: only the MCP sign-in return is accepted. Invites, listings and installs need the account service.
+  if (LOCAL_PRIVACY_MODE && link.kind !== "mcp-auth") return;
   if (link.kind === "mcp-auth") {
     receiveMcpAuthorizationCode(link.state, link.code);
     return;
@@ -1472,6 +1475,8 @@ if (!hasSingleInstanceLock) {
           built.centralAuthInitialization.pipe(Effect.flatMap(() => serverModeControl.publish())),
         ).catch((error) => logger.error("Unable to publish this server:", toLogValue(error)));
       } else if (
+        // Local privacy mode: this computer never publishes itself to the relay.
+        !LOCAL_PRIVACY_MODE &&
         shouldAutoStartHost({
           configured: Boolean(teamIdentity),
           enabledOnLaunch: teamIdentity?.enabledOnLaunch ?? false,
@@ -1491,6 +1496,8 @@ if (!hasSingleInstanceLock) {
         return remoteAccountGate
           .withPermit(
             Effect.gen(function* () {
+              // Local privacy mode: there is no account directory to sync.
+              if (LOCAL_PRIVACY_MODE) return;
               if (generation !== centralAuthGeneration || built.centralAuth.getState().status !== "signed_in") return;
               yield* remoteServers.syncRemoteHosts();
             }),

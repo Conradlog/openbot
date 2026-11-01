@@ -1,4 +1,5 @@
 import type { ServerSummary } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { CONNECTORS, type ConnectorId } from "@openbot/ui/features/connectors/connectors";
 import { remoteAdminServer } from "../servers/server-capabilities";
 
@@ -13,6 +14,8 @@ export type ConnectorAccess = "available" | "local-only" | "hidden";
  * connectors whose capability it serves, for an owner or admin. */
 export function connectorAccess(id: ConnectorId, server: ServerSummary | undefined): ConnectorAccess {
   if (!server) return "hidden";
+  // Local privacy mode: Slack, Discord and Telegram need the Signal relay, which is off.
+  if (LOCAL_PRIVACY_MODE && (id === "slack" || id === "discord" || id === "telegram")) return "hidden";
   if (server.kind === "local") return "available";
   const capability = CONNECTORS[id].server;
   if (capability === null) return "local-only";

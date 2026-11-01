@@ -90,6 +90,7 @@ import {
   latestTurnAnswer,
 } from "@openbot/contracts/ipc";
 import { decodeRecord, requiredString } from "@openbot/contracts/ipc-decoding";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { sourceText } from "@openbot/i18n/source";
 import { createOpenBotLogger, toLogValue } from "@openbot/logging";
 import { REMOTE_ACCOUNT_CHECK_INTERVAL_MS } from "@openbot/team-client";
@@ -214,6 +215,7 @@ import { InstanceTransferService } from "./instance-transfer-service";
 import { InterfaceSizeService } from "./interface-size-service";
 import { prepareToolRuntimeForTest } from "./ipc/mcp-server-handlers";
 import { LanguageService } from "./language-service";
+import { LOCAL_ACCOUNT } from "./local-privacy";
 import { localRoutineFeedDocument } from "./local-routine-calendar";
 import { type LocalServerChildEnvironment, startLocalServerChild } from "./local-server-child";
 import { LOCAL_SERVERS_FILE } from "./local-servers/local-server-registry";
@@ -713,7 +715,9 @@ async function createMessagingServices({
   // linked to this host, and makes its Discord and Telegram calls.
   const signalIngress = new SignalIngress({
     hostId: readHostId,
+    // Local privacy mode: the relay needs an account ticket, so it never opens.
     signedIn: () => {
+      if (LOCAL_PRIVACY_MODE) return false;
       try {
         centralAuth.getSignedInUser();
         return true;
@@ -965,6 +969,8 @@ export async function createApplicationServices({
     mobileConnectApiUrl: readMobileConnectApiUrl(process.env.OPENBOT_MOBILE_AUTH_API_URL, centralAuthApiUrl),
     storagePath: join(app.getPath("userData"), CENTRAL_AUTH_FILE),
     ...safeStorageCipher("error.app.macSecureStorageUnavailable"),
+    // Local privacy mode: no account service. The app opens as a fixed local user.
+    localAccount: LOCAL_ACCOUNT,
   });
   // Registered before `initialize()`, which publishes `{ status: "loading" }` synchronously: the
   // listener therefore runs on the next line with most of this function's services still unbuilt.

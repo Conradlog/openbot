@@ -1,4 +1,5 @@
 import type { AppInfo } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import type { AppTextKey } from "@openbot/i18n";
 import {
   Bell,
@@ -68,7 +69,6 @@ export const navItems: ReadonlyArray<SettingsNavItem> = [
       { titleKey: "settings.keepAwake.title", descriptionKey: "settings.keepAwake.description" },
       { titleKey: "settings.keepAwakeOnBattery.title", descriptionKey: "settings.keepAwakeOnBattery.description" },
       { titleKey: "settings.restoreWorkspace.title", descriptionKey: "settings.restoreWorkspace.description" },
-      { titleKey: "settings.analytics.title", descriptionKey: "settings.analytics.description" },
     ],
   },
   {
@@ -204,6 +204,10 @@ export function navItem(tab: SettingsTab): SettingsNavItem {
  */
 export function settingsTabShown(tab: SettingsTab, dynamicIslandShown: boolean): boolean {
   if (tab === "hosted-servers") return false;
+  // Local privacy mode: updating is manual only, so there is no Updates tab.
+  if (LOCAL_PRIVACY_MODE && tab === "updates") return false;
+  // Local privacy mode: these tabs need the account service, which is off.
+  if (LOCAL_PRIVACY_MODE && (tab === "profile" || tab === "billing" || tab === "mobile-connect")) return false;
   return tab !== "dynamic-island" || dynamicIslandShown;
 }
 

@@ -130,8 +130,10 @@ export interface SettingsModalProps {
  */
 export function SettingsModal(props: SettingsModalProps) {
   const i18n = useI18n();
+  // Local privacy mode: a hidden tab (billing, profile, mobile) opens General instead.
+  const showableTab = (tab: SettingsTab) => (settingsTabShown(tab, true) ? tab : "general");
   const [activeTab, setActiveTab] = createSignal<SettingsTab>(
-    untrack(() => (props.initialTab === "hosted-servers" ? "billing" : props.initialTab)) ?? "general",
+    untrack(() => showableTab((props.initialTab === "hosted-servers" ? "billing" : props.initialTab) ?? "general")),
   );
   let modalElement: HTMLElement | undefined;
   const profile = createSettingsProfileStore(props, () => activeTab() === "profile");
@@ -179,7 +181,7 @@ export function SettingsModal(props: SettingsModalProps) {
     },
     (tab) => {
       if (!tab) return;
-      setActiveTab(tab);
+      setActiveTab(showableTab(tab));
       agents.showList();
     },
   );

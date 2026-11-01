@@ -1,4 +1,5 @@
 import type { ServerSummary } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { CONNECTOR_IDS, type ConnectorId } from "@openbot/ui/features/connectors/connectors";
 import { createEffect, createMemo, untrack } from "solid-js";
 import { createBitwardenConnector } from "./bitwarden-connector";
@@ -35,7 +36,7 @@ export const LOCAL_CONNECTOR_TRANSPORTS = {
 export function createConnectorSet(transports: ConnectorTransports, options: MessagingConnectorOptions): ConnectorSet {
   const set: ConnectorSet = {};
   const { messaging } = transports;
-  if (messaging) {
+  if (messaging && !LOCAL_PRIVACY_MODE) {
     set.slack = createMessagingConnector("slack", messaging, options);
     set.discord = createMessagingConnector("discord", messaging, options);
     set.telegram = createMessagingConnector("telegram", messaging, options);

@@ -1,5 +1,6 @@
 import type { HostedServerEntryPoint } from "@openbot/contracts/hosted-servers";
 import type { HostStatus, ServerNotificationLevel, ServerSummary } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import type { TeamCurrentCapability } from "@openbot/contracts/team-protocol/current";
 import { WAKE_RECONNECT_STATES } from "@openbot/team-client/hosted-server-wake";
 import { classifyFailure } from "@openbot/telemetry";
@@ -331,6 +332,8 @@ const Servers = createSimpleContext({
      * account can change after the start.
      */
     async function refreshHostedServersAvailable(): Promise<boolean> {
+      // Local privacy mode: no hosted servers, and no request to the account service.
+      if (LOCAL_PRIVACY_MODE) return false;
       // A failed read keeps the last answer: a network error does not turn the plans off.
       const list = await serversPort()
         .hostedServers.list()

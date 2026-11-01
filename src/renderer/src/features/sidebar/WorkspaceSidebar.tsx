@@ -1,4 +1,5 @@
 import { type ChatWindowTarget, canAdministerServer } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { AGENT_HIDDEN_CAPABILITY } from "@openbot/contracts/team-protocol/current";
 import { computeAgentAvatarMoods } from "@openbot/ui/features/agents/agent-avatar-mood";
 import { Sidebar } from "@openbot/ui/features/sidebar/Sidebar";
@@ -373,7 +374,8 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
               />
             )}
           </Show>
-          <Show when={!platform.landingPreview && !footerCard() && !mobileAppDismissed()}>
+          {/* Local privacy mode: no mobile app card and no community card. */}
+          <Show when={!LOCAL_PRIVACY_MODE && !platform.landingPreview && !footerCard() && !mobileAppDismissed()}>
             <SidebarMobileAppCard
               onOpenInstall={() => openAppSettings(null, "mobile-connect")}
               onDismiss={() => {
@@ -382,7 +384,15 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
               }}
             />
           </Show>
-          <Show when={!platform.landingPreview && !footerCard() && mobileAppDismissed() && !communityCard.dismissed()}>
+          <Show
+            when={
+              !LOCAL_PRIVACY_MODE &&
+              !platform.landingPreview &&
+              !footerCard() &&
+              mobileAppDismissed() &&
+              !communityCard.dismissed()
+            }
+          >
             <SidebarCommunityCard
               onJoinDiscord={() => void appPort().openExternal("discord")}
               onFollowX={() => void appPort().openExternal("x")}
@@ -392,6 +402,7 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
           <SidebarUpdateIsland />
         </>
       }
+      marketplaceSupported={!LOCAL_PRIVACY_MODE}
       onOpenMarketplace={() => setSkillsMarketplaceOpen(true)}
       agentsConnecting={agentListConnecting()}
       emptyAction={
