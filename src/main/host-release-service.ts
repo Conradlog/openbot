@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import type { HostReleaseStatus, UpdateStatus } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { Deferred, Effect, Exit, Schema } from "effect";
 import { parse } from "yaml";
 import { isValidSemver } from "./update-service";
@@ -66,8 +67,11 @@ export class HostReleaseService {
 
   constructor(options: HostReleaseOptions) {
     this.#options = options;
+    // Local privacy mode: no release feed, so the phase stays "unavailable" and check() fetches nothing.
     this.#target =
-      options.packaged && isValidSemver(options.currentVersion) ? releaseTarget(options.platform, options.arch) : null;
+      !LOCAL_PRIVACY_MODE && options.packaged && isValidSemver(options.currentVersion)
+        ? releaseTarget(options.platform, options.arch)
+        : null;
   }
 
   snapshot(): HostReleaseStatus {
@@ -128,6 +132,7 @@ export class HostReleaseService {
 
 /** The version of the latest published release for `target`. Rejects on any fault of the feed. */
 async function fetchLatestRelease(target: ReleaseTarget, request: typeof fetch, signal: AbortSignal): Promise<string> {
+  if (LOCAL_PRIVACY_MODE) throw new Error("Release feed disabled by local privacy mode");
   const response = await request(`https://github.com/nightly-labs/openbot/releases/latest/download/${target.feed}`, {
     signal: AbortSignal.any([signal, AbortSignal.timeout(15_000)]),
   });

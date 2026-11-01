@@ -4,7 +4,8 @@ import { Effect, Semaphore } from "effect";
 import { isMissingFileError } from "../backend/file-errors";
 import { readPreferenceFile, writePreferenceFile } from "./preference-file";
 
-const DEFAULT_PREFERENCE: UpdatePreference = { autoDownload: true, allowRemoteUpdates: true, autoInstall: false };
+// Local privacy mode: nothing downloads without a click, so automatic download defaults to off.
+const DEFAULT_PREFERENCE: UpdatePreference = { autoDownload: false, allowRemoteUpdates: true, autoInstall: false };
 
 // `allowRemoteUpdates` and `autoInstall` came later in the same version 1 file. A file without them
 // is one written before remote updates existed, and an older app that reads a newer file ignores them.

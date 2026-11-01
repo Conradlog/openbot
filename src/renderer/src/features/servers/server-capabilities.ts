@@ -6,6 +6,7 @@ import {
   pasteCodeSignInSupported,
   type ServerSummary,
 } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import type { TeamCurrentCapability } from "@openbot/contracts/team-protocol/current";
 import { PROVIDER_HOST_SIGN_IN_PROVIDERS } from "@openbot/contracts/team-protocol/provider-host-sign-in-v1";
 import { PROVIDERS_ADMIN_CODE_SIGN_IN_PROVIDERS } from "@openbot/contracts/team-protocol/providers-v1";
@@ -238,6 +239,8 @@ export function olderAppSide(clientVersion: string, hostVersion: string): "clien
 
 /** A joined server with member update access, or the released administrator update API. */
 export function remoteUpdateServer(server: ServerSummary | undefined): ServerSummary | undefined {
+  // Local privacy mode: updating is manual only, so no server offers an update check.
+  if (LOCAL_PRIVACY_MODE) return undefined;
   if (server?.kind !== "remote") return undefined;
   return serverSupportsCapability(server, "host-member-update-v1")
     ? server

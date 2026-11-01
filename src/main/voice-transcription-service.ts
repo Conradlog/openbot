@@ -19,6 +19,7 @@ import {
   type VoiceStreamTranscript,
   type VoiceTranscriptionResult,
 } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { sourceText } from "@openbot/i18n/source";
 import { createOpenBotLogger } from "@openbot/logging";
 import { Effect, Exit, Fiber, Scope } from "effect";
@@ -159,7 +160,10 @@ export class VoiceTranscriptionService extends EventEmitter<VoiceTranscriptionEv
 
   /** Downloads the model in use when it is missing. */
   readonly prepareModel = Effect.fn("VoiceTranscription.prepareModel")(function* (this: VoiceTranscriptionService) {
-    return yield* this.downloadModel(this.#preferences.get().modelId);
+    const { modelId } = this.#preferences.get();
+    // Local privacy mode: starting a dictation never downloads. Only the Download button does.
+    if (LOCAL_PRIVACY_MODE) return yield* this.#installedStatus(modelId);
+    return yield* this.downloadModel(modelId);
   }).bind(this);
 
   readonly downloadModel = Effect.fn("VoiceTranscription.downloadModel")(function* (
@@ -225,7 +229,10 @@ export class VoiceTranscriptionService extends EventEmitter<VoiceTranscriptionEv
                   cause: new Error(sourceText("error.voice.transcriptionFailed")),
                 });
               // After the first full check in this process, this is a `stat` of each model file.
-              const modelStatus = yield* this.downloadModel(modelId);
+              // Local privacy mode: a model that is not downloaded fails here and never downloads.
+              const modelStatus = LOCAL_PRIVACY_MODE
+                ? yield* this.#installedStatus(modelId)
+                : yield* this.downloadModel(modelId);
               if (modelStatus.phase !== "ready")
                 return yield* new VoiceOperationError({
                   cause: new Error(modelStatus.message ?? sourceText("error.voice.modelUnavailable")),
@@ -342,6 +349,17 @@ export class VoiceTranscriptionService extends EventEmitter<VoiceTranscriptionEv
     if (!isLocalVoiceModelId(modelId)) return Effect.succeed(this.#cloudStatus());
     const missing = this.#runtimeMissing(modelId);
     return missing ? Effect.succeed(missing) : this.#models[modelId].getStatus();
+  }
+
+  /** The status of a model without a download. A model that is not downloaded reads as unavailable. */
+  #installedStatus(modelId: VoiceModelId): Effect.Effect<VoiceModelStatus, VoiceOperationError> {
+    return this.#status(modelId).pipe(
+      Effect.map((status) =>
+        status.phase === "missing" && !status.message
+          ? { ...status, message: sourceText("error.voice.modelUnavailable") }
+          : status,
+      ),
+    );
   }
 
   /** The ElevenLabs model is ready when its key is saved. */

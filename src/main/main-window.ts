@@ -19,6 +19,7 @@ import {
   LOCAL_SERVER_ID,
   type MacPermissionId,
 } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import type { AppTextKey, AppTranslate } from "@openbot/i18n";
 import {
   app,
@@ -858,6 +859,8 @@ export function configureApplicationMenu(
           { type: "separator" },
           {
             label: translate("menu.checkForUpdates"),
+            // Local privacy mode: updating is manual only, so the menu item is hidden.
+            visible: !LOCAL_PRIVACY_MODE,
             click: (_item, focusedWindow) => {
               // On macOS a closed main window only hides and the menu stays, so show it again: the
               // check and its result are visible only in Settings.
@@ -870,7 +873,7 @@ export function configureApplicationMenu(
               Effect.runFork(updater.checkForUpdates());
             },
           },
-          { type: "separator" },
+          { type: "separator", visible: !LOCAL_PRIVACY_MODE },
           {
             label: translate("menu.preferences"),
             accelerator: "CommandOrControl+,",

@@ -8,6 +8,7 @@
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import type { DynamicRecord } from "@openbot/contracts/runtime-values";
 import { Effect, Option, Schema } from "effect";
 import { openCodeDataDirectory } from "./process-confinement";
@@ -50,6 +51,8 @@ const StoredKey = Schema.Struct({
  * (`opencode-config.ts`), so with one this reads that key only.
  */
 export const readOpenCodeGoUsage = Effect.fn("OpenCode.readGoUsage")(function* (apiKey: string | null) {
+  // Local privacy mode: the dock polls this on a timer, so no quota is requested. The row stays hidden.
+  if (LOCAL_PRIVACY_MODE) return NO_USAGE;
   const keys = apiKey ? [apiKey] : yield* readOwnKeys();
   for (const key of keys) {
     const usage = yield* readGoUsage(key);

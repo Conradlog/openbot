@@ -2048,7 +2048,8 @@ export async function createApplicationServices({
    * Nothing waits for it and nothing reports it. MCP is optional, so a failed download must not
    * reach onboarding; a server that cannot start is reported at hand-off like any other.
    */
-  if (!setupState.completed || service.enabledMcpServers().length > 0)
+  // Local privacy mode: no download at startup. Saving, enabling or testing an MCP server still starts it.
+  if (!LOCAL_PRIVACY_MODE && (!setupState.completed || service.enabledMcpServers().length > 0))
     Effect.runFork(providerRuntimes.ensureToolRuntimes());
   // After `new AgentService`, which owns the channels: the layout files channels beside agents, and
   // reconciling against the agents alone would read every channel as gone and drop where it sits.
@@ -2985,7 +2986,9 @@ export async function createApplicationServices({
       (process.env.OPENBOT_HOSTED_SERVER === "1" || installationMode === "self") &&
       existsSync(HOSTED_UPDATE_TRIGGER));
   // A local server is the same application as its parent, which installs the update for both.
+  // Local privacy mode: updating is manual only, so the updater never starts and never checks.
   const updatesEnabled =
+    !LOCAL_PRIVACY_MODE &&
     !localServerChild &&
     app.isPackaged &&
     !isNixStoreInstall() &&

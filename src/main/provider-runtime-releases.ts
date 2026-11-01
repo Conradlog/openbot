@@ -1,8 +1,10 @@
 import { MANAGED_RUNTIME_PROVIDERS, type ManagedProviderId } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { type DynamicRecord, isDynamicRecord, isNumber, isString } from "@openbot/contracts/runtime-values";
 import { sourceText } from "@openbot/i18n/source";
 import { Effect } from "effect";
 import type { AgentRuntimeLock } from "../../scripts/agent-runtime-lock";
+import { MCP_CLIENT_USER_AGENT } from "../backend/mcp-client-identity";
 import {
   codexTag,
   cursorPackageUrl,
@@ -53,7 +55,7 @@ const VERSION = /^\d+\.\d+\.\d+$/u;
  */
 const CURSOR_DATE = /^\d{4}\.\d{2}\.\d{2}$/u;
 const CURSOR_BUILD = /^\d{4}\.\d{2}\.\d{2}(?:-\d{2}-\d{2}-\d{2})?-[0-9a-f]{7,40}$/u;
-const HEADERS = { "User-Agent": "OpenBot-runtime-installer" };
+const HEADERS = { "User-Agent": MCP_CLIENT_USER_AGENT };
 
 export type BlockedVersions = ReadonlyMap<ManagedProviderId, ReadonlySet<string>>;
 
@@ -346,6 +348,8 @@ export function latestRelease(
 export const fetchBlockedVersions = Effect.fn("ProviderRelease.fetchBlockedVersions")(function* (
   fetch: Fetch,
 ): Effect.fn.Return<BlockedVersions, ProviderRuntimeFailure> {
+  // Local privacy mode: the block list is never fetched. The fallback blocks nothing.
+  if (LOCAL_PRIVACY_MODE) return new Map<ManagedProviderId, ReadonlySet<string>>();
   const value = yield* fetchJsonEffect(fetch, BLOCKED_VERSIONS_URL);
   if (!(value.schemaVersion === 1 && isDynamicRecord(value.blocked))) {
     return yield* new ProviderRuntimeFailure({ cause: new Error(sourceText("error.provider.blockedListShape")) });

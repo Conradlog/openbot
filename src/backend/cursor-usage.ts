@@ -13,6 +13,7 @@ import { readFile } from "node:fs/promises";
 import { homedir, platform } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { Effect, Option, Schema } from "effect";
 import { type AccountRateLimitsReadResult, type AccountRateLimitWindowResult, getRecord } from "./protocol";
 
@@ -114,6 +115,8 @@ const postDashboard = Effect.fn("Cursor.postDashboard")(function* (
 const MergedPlan = Schema.Struct({ isMerged: Schema.Literal(true) });
 
 export const readCursorUsage = Effect.fn("Cursor.readUsage")(function* () {
+  // Local privacy mode: the dock polls this on a timer, so no usage is requested. The row stays hidden.
+  if (LOCAL_PRIVACY_MODE) return NO_USAGE;
   const accessToken = yield* readAccessToken();
   if (!accessToken) return NO_USAGE;
   const endpoint = process.env.CURSOR_API_ENDPOINT?.trim() || CURSOR_API_ENDPOINT;

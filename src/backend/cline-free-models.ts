@@ -1,4 +1,5 @@
 import { isAgentModel } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { createOpenBotLogger } from "@openbot/logging";
 import { Effect, Schema } from "effect";
 import type { AcpModel } from "./acp-configuration";
@@ -44,6 +45,8 @@ export function clineFreeModels(): () => Effect.Effect<AcpModel[]> {
   let last: AcpModel[] = CLINE_FREE_MODEL_FALLBACKS.map(freeModel);
   return Effect.fn("ClineFreeModels.read")(
     function* () {
+      // Local privacy mode: the list is never fetched. The bundled list is the answer.
+      if (LOCAL_PRIVACY_MODE) return last;
       // One deadline for the headers and the body: a body that stalls must not hold the model list.
       const body = yield* Effect.tryPromise({
         try: async (signal) => {

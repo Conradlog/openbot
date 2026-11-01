@@ -9,6 +9,7 @@ import type {
   UpdateStatus,
 } from "@openbot/contracts/ipc";
 import { isUpdateBusyPhase } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { sourceText } from "@openbot/i18n/source";
 import { createOpenBotLogger, toLogValue } from "@openbot/logging";
 import { Cause, Deferred, Effect, Result, Schema, Scope, Semaphore } from "effect";
@@ -719,6 +720,8 @@ export class UpdateService extends EventEmitter<UpdateServiceEvents> {
   }
 
   #scheduleCheck(delayMs: number): void {
+    // Local privacy mode: no automatic update check, ever.
+    if (LOCAL_PRIVACY_MODE) return;
     if (this.#checkTimer) clearTimeout(this.#checkTimer);
     this.#checkTimer = setTimeout(() => this.#fork(this.#check(false)), delayMs);
     this.#checkTimer.unref?.();

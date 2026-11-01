@@ -24,6 +24,7 @@ import {
   type ProviderRuntimeStatus,
   type RemovableRuntimes,
 } from "@openbot/contracts/ipc";
+import { LOCAL_PRIVACY_MODE } from "@openbot/contracts/local-privacy";
 import { isBoolean, isDynamicRecord, isNumber, isString } from "@openbot/contracts/runtime-values";
 import { matchingSourceKeys, sourceText } from "@openbot/i18n/source";
 import { createOpenBotLogger, type LogValue, redactText, toLogValue } from "@openbot/logging";
@@ -41,6 +42,7 @@ import {
 } from "../backend/cli";
 import { runCauseEffect } from "../backend/effect-boundary";
 import { sha256File } from "../backend/file-hash";
+import { MCP_CLIENT_USER_AGENT } from "../backend/mcp-client-identity";
 import { type McpToolRuntimes, NO_MCP_TOOL_RUNTIMES } from "../backend/mcp-provider-shapes";
 import { measureTree } from "../backend/storage-usage";
 import {
@@ -503,6 +505,8 @@ export class ProviderRuntimeManager extends EventEmitter<ProviderRuntimeManagerE
    * each managed provider CLI that has a newer version, with no offer to the user (#3164).
    */
   startUpdateChecks(options: { intervalMs?: number; updateInstalled?: boolean } = {}): void {
+    // Local privacy mode: no startup, hourly or post-upgrade check. Only the user's click checks.
+    if (LOCAL_PRIVACY_MODE) return;
     if (this.#checkTimer || !this.#target || this.#stopping) return;
     this.#checkIntervalMs = options.intervalMs ?? UPDATE_CHECK_INTERVAL_MS;
     this.#updateInstalled = options.updateInstalled ?? false;
@@ -1354,7 +1358,7 @@ export class ProviderRuntimeManager extends EventEmitter<ProviderRuntimeManagerE
       );
       const response = yield* runtimeIO((signal) =>
         this.#fetch(url, {
-          headers: { "User-Agent": "OpenBot-runtime-installer" },
+          headers: { "User-Agent": MCP_CLIENT_USER_AGENT },
           signal: AbortSignal.any([signal, controller.signal, AbortSignal.timeout(30_000)]),
         }),
       ).pipe(Effect.mapError(({ cause }) => requestFailure(url, cause)));
@@ -1384,7 +1388,7 @@ export class ProviderRuntimeManager extends EventEmitter<ProviderRuntimeManagerE
           signal: AbortSignal.any([signal, effectSignal]),
           redirect: "follow",
           headers: {
-            "User-Agent": "OpenBot-runtime-installer",
+            "User-Agent": MCP_CLIENT_USER_AGENT,
             ...(offset > 0 ? { Range: `bytes=${offset}-`, ...(etag ? { "If-Range": etag } : {}) } : {}),
           },
         }),
